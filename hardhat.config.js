@@ -25,13 +25,12 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   solidity: "0.8.4",
   networks: {
-    testnet: {
-      url: process.env.BSC_TESTNET_URL || "",
+    mainnet: {
+      url: "https://bsc-dataseed1.binance.org",
       accounts: [
         process.env.ACCOUNT1,
         process.env.ACCOUNT2,
         process.env.ACCOUNT3,
-        process.env.ACCOUNT4,
       ],
     },
   },

@@ -12,10 +12,8 @@ import "./WBNBDistributor.sol";
 contract HeroInfinityToken is Context, IBEP20, Ownable {
   using SafeMath for uint256;
 
-  // address DEX = 0x10ED43C718714eb63d5aA57B78B54704E256024E; // Dex router address
-  address public dexAddress = 0xD99D1c33F9fC3444f8101754aBC46c52416550D1; // Testnet
-  // address WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; // WBNB address
-  address public wbnbAddress = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; // Testnet
+  address public dexAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E; // Pancakeswap V2 router address
+  address public wbnbAddress = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; // WBNB address
   address public deadAddress = 0x000000000000000000000000000000000000dEaD;
   address public zeroAddress = 0x0000000000000000000000000000000000000000;
 
