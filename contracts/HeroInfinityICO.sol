@@ -11,6 +11,8 @@ contract HeroInfinityICO is ReentrancyGuard, Context, Ownable {
   using SafeMath for uint256;
 
   mapping(address => uint256) public contributions;
+  mapping(address => bool) public whitelists;
+  address[] private whiteWallets;
 
   IERC20 public token;
   address payable public payWallet;
@@ -96,9 +98,22 @@ contract HeroInfinityICO is ReentrancyGuard, Context, Ownable {
     }
   }
 
+  function clearWhitelists() external onlyOwner {
+    for (uint8 i = 0; i < whiteWallets.length; i++) {
+      whitelists[whiteWallets[i]] = false;
+    }
+    delete whiteWallets;
+  }
+
   //Pre-Sale
   function buyTokens() public payable nonReentrant icoActive {
+    require(whitelists[msg.sender] == true, "Wallet is not whitelisted");
     _buyTokens(msg.sender);
+  }
+
+  function addWhitelist(address wallet) external onlyOwner {
+    whitelists[wallet] = true;
+    whiteWallets.push(wallet);
   }
 
   function _buyTokens(address beneficiary) internal {
@@ -131,6 +146,8 @@ contract HeroInfinityICO is ReentrancyGuard, Context, Ownable {
 
   function claimTokens() external icoNotActive {
     require(startRefund == false, "Claim disabled");
+    require(whitelists[msg.sender] == true, "Wallet is not whitelisted");
+
     uint256 tokensAmt = _getTokenAmount(contributions[msg.sender]);
     contributions[msg.sender] = 0;
     token.transfer(msg.sender, tokensAmt);
@@ -194,6 +211,8 @@ contract HeroInfinityICO is ReentrancyGuard, Context, Ownable {
 
   function refundMe() public icoNotActive {
     require(startRefund == true, "no refund available");
+    require(whitelists[msg.sender] == true, "Wallet is not whitelisted");
+
     uint256 amount = contributions[msg.sender];
     if (address(this).balance >= amount) {
       contributions[msg.sender] = 0;
