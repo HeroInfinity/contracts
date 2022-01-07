@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./interface/IBEP20.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract TokenGovernor is AccessControl {
   bytes32 public constant TIMELOCK_ADMIN_ROLE =
@@ -12,7 +12,7 @@ contract TokenGovernor is AccessControl {
   bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
   uint256 internal constant _DONE_TIMESTAMP = uint256(1);
 
-  IBEP20 public token;
+  IERC20 public token;
 
   mapping(bytes32 => uint256) private _timestamps;
   uint256 private _minDelay;
@@ -55,7 +55,7 @@ contract TokenGovernor is AccessControl {
    * @dev Initializes the contract with a given `minDelay`.
    */
   constructor(
-    IBEP20 _token,
+    IERC20 _token,
     uint256 minDelay,
     address[] memory proposers,
     address[] memory executors

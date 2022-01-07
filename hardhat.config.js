@@ -33,6 +33,14 @@ module.exports = {
         process.env.ACCOUNT3,
       ],
     },
+    testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      accounts: [
+        process.env.ACCOUNT1,
+        process.env.ACCOUNT2,
+        process.env.ACCOUNT3,
+      ],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
