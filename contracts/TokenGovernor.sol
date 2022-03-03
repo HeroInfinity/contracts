@@ -12,8 +12,6 @@ contract TokenGovernor is AccessControl {
   bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
   uint256 internal constant _DONE_TIMESTAMP = uint256(1);
 
-  IERC20 public token;
-
   mapping(bytes32 => uint256) private _timestamps;
   uint256 private _minDelay;
 
@@ -55,13 +53,10 @@ contract TokenGovernor is AccessControl {
    * @dev Initializes the contract with a given `minDelay`.
    */
   constructor(
-    IERC20 _token,
     uint256 minDelay,
     address[] memory proposers,
     address[] memory executors
   ) {
-    token = _token;
-
     _setRoleAdmin(TIMELOCK_ADMIN_ROLE, TIMELOCK_ADMIN_ROLE);
     _setRoleAdmin(PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE);
     _setRoleAdmin(EXECUTOR_ROLE, TIMELOCK_ADMIN_ROLE);
@@ -380,7 +375,13 @@ contract TokenGovernor is AccessControl {
     _minDelay = newDelay;
   }
 
-  function tokenTransfer(address toAddress, uint256 amount) external {
+  function tokenTransfer(
+    address tokenAddress,
+    address toAddress,
+    uint256 amount
+  ) external {
+    IERC20 token = IERC20(tokenAddress);
+
     require(
       msg.sender == address(this),
       "TokenGovernor: caller must be timelock"
