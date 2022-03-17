@@ -1,21 +1,25 @@
 {
-  "name": "contracts",
+  "name": "@heroinfinity/contracts",
   "version": "1.0.0",
   "description": "Hero Infinity smart contracts",
   "scripts": {
-    "compile": "hardhat compile"
+    "compile": "NODE_ENV=local hardhat compile --network local",
+    "deploy:local": "NODE_ENV=local hardhat run scripts/deploy.js --network local && yarn artifacts",
+    "deploy:mumbai": "NODE_ENV=mumbai hardhat run scripts/deploy.js --network mumbai && yarn artifacts",
+    "verify:mumbai": "NODE_ENV=mumbai hardhat run scripts/verify.js --network mumbai",
+    "artifacts": "find artifacts/contracts -regex '.*[^(dbg)].json' -exec cp \"{}\" ../sdk/artifacts/ \\;"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DOTA2NFT/contracts.git"
+    "url": "git+https://github.com/HeroInfinity/contracts.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DOTA2NFT/contracts/issues"
+    "url": "https://github.com/HeroInfinity/contracts/issues"
   },
-  "homepage": "https://github.com/DOTA2NFT/contracts#readme",
+  "homepage": "https://github.com/HeroInfinity/contracts#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",

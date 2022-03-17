@@ -4,18 +4,22 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const { time } = require("@openzeppelin/test-helpers");
-
-const MINDELAY = time.duration.days(1).toString(); // 1 day timelock
-const TOKEN_ADDRESS = "0xdb56B2922c7C275167A9A3129d36351Fd385Ed21";
+const { MINDELAY } = require("./constants");
 
 async function main() {
   const [admin, proposer, executor] = await hre.ethers.getSigners();
   console.log(admin.address, proposer.address, executor.address);
 
+  // We get the contract to deploy
+  const HeroInfinityToken = await hre.ethers.getContractFactory(
+    "HeroInfinityToken"
+  );
+  const token = await HeroInfinityToken.deploy();
+
+  await token.deployed();
+
   const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
   const governor = await TokenGovernor.deploy(
-    TOKEN_ADDRESS,
     MINDELAY,
     [proposer.address],
     [executor.address]
@@ -23,15 +27,8 @@ async function main() {
 
   await governor.deployed();
 
-  await hre.run("verify:verify", {
-    address: governor.address,
-    constructorArguments: [
-      TOKEN_ADDRESS,
-      MINDELAY,
-      [proposer.address],
-      [executor.address],
-    ],
-  });
+  console.log("Token deployed to: " + token.address);
+  console.log("Governor deployed to: " + governor.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -40,3 +37,7 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+module.exports = {
+  MINDELAY,
+};

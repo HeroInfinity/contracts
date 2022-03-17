@@ -19,4 +19,10 @@ module.exports = {
       globals: { task: true },
     },
   ],
+  rules: {
+    "no-unused-vars": [
+      "error",
+      { argsIgnorePattern: "^_", ignoreRestSiblings: true },
+    ],
+  },
 };

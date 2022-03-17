@@ -23,18 +23,26 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
+  solidity: "0.8.13",
   networks: {
-    mainnet: {
-      url: "https://bsc-dataseed1.binance.org",
+    local: {
+      url: "http://127.0.0.1:8545",
       accounts: [
         process.env.ACCOUNT1,
         process.env.ACCOUNT2,
         process.env.ACCOUNT3,
       ],
     },
-    testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    mainnet: {
+      url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
+      accounts: [
+        process.env.ACCOUNT1,
+        process.env.ACCOUNT2,
+        process.env.ACCOUNT3,
+      ],
+    },
+    rinkeby: {
+      url: "https://rinkey.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
       accounts: [
         process.env.ACCOUNT1,
         process.env.ACCOUNT2,
@@ -47,7 +55,7 @@ module.exports = {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   mocha: {
     timeout: 20000,
