@@ -7,8 +7,8 @@ const hre = require("hardhat");
 const { MINDELAY } = require("./constants");
 
 async function main() {
-  const [admin, proposer, executor] = await hre.ethers.getSigners();
-  console.log(admin.address, proposer.address, executor.address);
+  const [admin] = await hre.ethers.getSigners();
+  console.log(admin.address);
 
   // We get the contract to deploy
   const HeroInfinityToken = await hre.ethers.getContractFactory(
@@ -18,17 +18,24 @@ async function main() {
 
   await token.deployed();
 
-  const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
-  const governor = await TokenGovernor.deploy(
-    MINDELAY,
-    [proposer.address],
-    [executor.address]
-  );
+  // const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
+  // const governor = await TokenGovernor.deploy(
+  //   MINDELAY,
+  //   [proposer.address],
+  //   [executor.address]
+  // );
 
-  await governor.deployed();
+  // await governor.deployed();
+
+  const HeroInfinityNodePool = await hre.ethers.getContractFactory(
+    "HeroInfinityNodePool"
+  );
+  const nodePool = await HeroInfinityNodePool.deploy();
+
+  await nodePool.deployed();
 
   console.log("Token deployed to: " + token.address);
-  console.log("Governor deployed to: " + governor.address);
+  console.log("NodePool deployed to: " + nodePool.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

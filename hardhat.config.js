@@ -29,24 +29,24 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       accounts: [
         process.env.ACCOUNT1,
-        process.env.ACCOUNT2,
-        process.env.ACCOUNT3,
+        // process.env.ACCOUNT2,
+        // process.env.ACCOUNT3,
       ],
     },
     mainnet: {
       url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
       accounts: [
         process.env.ACCOUNT1,
-        process.env.ACCOUNT2,
-        process.env.ACCOUNT3,
+        // process.env.ACCOUNT2,
+        // process.env.ACCOUNT3,
       ],
     },
     rinkeby: {
-      url: "https://rinkey.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
+      url: "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
       accounts: [
         process.env.ACCOUNT1,
-        process.env.ACCOUNT2,
-        process.env.ACCOUNT3,
+        // process.env.ACCOUNT2,
+        // process.env.ACCOUNT3,
       ],
     },
   },

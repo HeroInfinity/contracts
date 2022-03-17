@@ -4,13 +4,14 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const { MINDELAY } = require("./constants");
+// const { MINDELAY } = require("./constants");
 
-const TOKEN_ADDRESS = "0xB4d6Ba463Bf0386761a0Eff0024B4680f7c3979a";
-const GOVERNOR_ADDRESS = "0x7F3Ce95EEA1B02419d0e1bAfaA292Fe2c2591dBF";
+const TOKEN_ADDRESS = "0xD0055DEaa682334e806623130C0566d634D8A5Ee";
+// const GOVERNOR_ADDRESS = "0xD48a20B653CC8f6485f9655f72BF2b81cF12c4c3";
+const NODE_POOL_ADDRESS = "0xD48a20B653CC8f6485f9655f72BF2b81cF12c4c3";
 
 async function main() {
-  const [, proposer, executor] = await hre.ethers.getSigners();
+  // const [, proposer, executor] = await hre.ethers.getSigners();
 
   try {
     await hre.run("verify:verify", {
@@ -21,10 +22,19 @@ async function main() {
     console.log(err);
   }
 
+  // try {
+  //   await hre.run("verify:verify", {
+  //     address: GOVERNOR_ADDRESS,
+  //     constructorArguments: [MINDELAY, [proposer.address], [executor.address]],
+  //   });
+  // } catch (err) {
+  //   console.log(err);
+  // }
+
   try {
     await hre.run("verify:verify", {
-      address: GOVERNOR_ADDRESS,
-      constructorArguments: [MINDELAY, [proposer.address], [executor.address]],
+      address: NODE_POOL_ADDRESS,
+      contract: "contracts/HeroInfinityNodePool.sol:HeroInfinityNodePool",
     });
   } catch (err) {
     console.log(err);
