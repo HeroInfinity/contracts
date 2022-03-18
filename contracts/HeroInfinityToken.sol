@@ -98,7 +98,7 @@ contract HeroInfinityToken is ERC20, Ownable {
 
   event OwnerForcedSwapBack(uint256 timestamp);
 
-  constructor() ERC20("HeroInfinity", "HRI") {
+  constructor() ERC20("Hero Infinity Token", "HRI") {
     IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
       0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D // rinkeby UniswapV2Router02 address
     );
