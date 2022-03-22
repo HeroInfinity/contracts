@@ -122,19 +122,19 @@ contract HeroInfinityToken is ERC20, Ownable {
     _setAutomatedMarketMakerPair(address(uniswapV2Pair), true);
 
     uint256 _buyMarketingFee = 6;
-    uint256 _buyLiquidityFee = 7;
+    uint256 _buyLiquidityFee = 4;
     uint256 _buyDevFee = 2;
 
-    uint256 _sellMarketingFee = 6;
-    uint256 _sellLiquidityFee = 17;
-    uint256 _sellDevFee = 2;
+    uint256 _sellMarketingFee = 8;
+    uint256 _sellLiquidityFee = 14;
+    uint256 _sellDevFee = 3;
 
     uint256 _totalSupply = 1 * 1e9 * 1e18;
 
     require(dailyThreshold * 1e18 > (_totalSupply * 5) / 10000); // at least 0.05% release to presalers per day
     airdropThreshold = dailyThreshold;
 
-    maxTransactionAmount = (_totalSupply * 50) / 10000; // 0.5% maxTransactionAmountTxn
+    maxTransactionAmount = (_totalSupply * 30) / 10000; // 0.3% maxTransactionAmountTxn
     maxWallet = (_totalSupply * 100) / 10000; // 1% maxWallet
     swapTokensAtAmount = (_totalSupply * 5) / 10000; // 0.05% swap wallet
 
