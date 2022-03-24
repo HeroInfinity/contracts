@@ -19,17 +19,17 @@ contract HeroInfinityNodePool is Ownable {
   mapping(address => uint256) public nodeOwners;
   mapping(address => NodeEntity[]) private _nodesOfUser;
 
-  uint256 public nodePrice = 100000 * 10**18;
-  uint256 public rewardPerDay = 4000 * 10**18;
-  uint256 public maxNodes = 20;
+  uint256 public nodePrice = 200000 * 10**18;
+  uint256 public rewardPerDay = 8000 * 10**18;
+  uint256 public maxNodes = 25;
 
-  uint256 public feeAmount = 15000000000000000;
+  uint256 public feeAmount = 10000000000000000;
   uint256 public feeDuration = 28 days;
   uint256 public overDuration = 2 days;
 
   uint256 public totalNodesCreated = 0;
 
-  IERC20 public hriToken = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC20 public hriToken = IERC20(0x0C4BA8e27e337C5e8eaC912D836aA8ED09e80e78);
 
   constructor() {}
 

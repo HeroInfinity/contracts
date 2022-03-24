@@ -11,12 +11,12 @@ async function main() {
   console.log(admin.address);
 
   // We get the contract to deploy
-  const HeroInfinityToken = await hre.ethers.getContractFactory(
-    "HeroInfinityToken"
-  );
-  const token = await HeroInfinityToken.deploy();
+  // const HeroInfinityToken = await hre.ethers.getContractFactory(
+  //   "HeroInfinityToken"
+  // );
+  // const token = await HeroInfinityToken.deploy();
 
-  await token.deployed();
+  // await token.deployed();
 
   // const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
   // const governor = await TokenGovernor.deploy(
@@ -34,7 +34,7 @@ async function main() {
 
   await nodePool.deployed();
 
-  console.log("Token deployed to: " + token.address);
+  // console.log("Token deployed to: " + token.address);
   console.log("NodePool deployed to: " + nodePool.address);
 }
 
