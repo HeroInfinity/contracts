@@ -4,29 +4,9 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const { MINDELAY } = require("./constants");
+const { sleep } = require("./utils/sleep");
 
 async function main() {
-  const [admin] = await hre.ethers.getSigners();
-  console.log(admin.address);
-
-  // We get the contract to deploy
-  // const HeroInfinityToken = await hre.ethers.getContractFactory(
-  //   "HeroInfinityToken"
-  // );
-  // const token = await HeroInfinityToken.deploy();
-
-  // await token.deployed();
-
-  // const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
-  // const governor = await TokenGovernor.deploy(
-  //   MINDELAY,
-  //   [proposer.address],
-  //   [executor.address]
-  // );
-
-  // await governor.deployed();
-
   const HeroInfinityNodePool = await hre.ethers.getContractFactory(
     "HeroInfinityNodePool"
   );
@@ -34,7 +14,17 @@ async function main() {
 
   await nodePool.deployed();
 
-  // console.log("Token deployed to: " + token.address);
+  await sleep(30000);
+
+  try {
+    await hre.run("verify:verify", {
+      address: nodePool.address,
+      contract: "contracts/HeroInfinityNodePool.sol:HeroInfinityNodePool",
+    });
+  } catch (err) {
+    console.log(err);
+  }
+
   console.log("NodePool deployed to: " + nodePool.address);
 }
 
@@ -44,7 +34,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
-module.exports = {
-  MINDELAY,
-};

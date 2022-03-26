@@ -4,6 +4,9 @@
   "description": "Hero Infinity smart contracts",
   "scripts": {
     "compile": "hardhat compile --network rinkeby",
+    "deploy:1": "hardhat run scripts/1-token.js",
+    "deploy:2": "hardhat run scripts/2-node-pool.js",
+    "deploy:3": "hardhat run scripts/3-nft.js",
     "artifacts": "find artifacts/contracts -regex '.*[^(dbg)].json' -exec cp \"{}\" ../sdk/artifacts/ \\;"
   },
   "repository": {

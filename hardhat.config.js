@@ -25,14 +25,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   solidity: "0.8.9",
   networks: {
-    local: {
-      url: "http://127.0.0.1:8545",
-      accounts: [
-        process.env.ACCOUNT1,
-        // process.env.ACCOUNT2,
-        // process.env.ACCOUNT3,
-      ],
-    },
     mainnet: {
       url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
       accounts: [
