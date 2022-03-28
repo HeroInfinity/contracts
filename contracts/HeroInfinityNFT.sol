@@ -4,8 +4,14 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract HeroInfinityNFT is ERC721Enumerable, Ownable {
+  using Strings for uint256;
+  using Counters for Counters.Counter;
+
+  Counters.Counter private tokenIds;
+
   /// @notice Max number of NFTs that can be minted per wallet.
   uint256 public constant MAX_PER_WALLET = 5;
   /// @notice Index of the last NFT reserved for team members (0 - 28).
@@ -30,13 +36,21 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   uint256 internal publicPointer = 29;
 
   /// @dev Base uri of the NFT metadata
-  string internal baseUri;
+  string internal baseUri =
+    "https://heroinfinity.mypinata.cloud/ipfs/QmeDBPjuwBnUiPJhUtxak49c8gw52b3fLUuPbYwqatFTqp/";
 
   /// @notice Number of NFTs minted by each address.
   mapping(address => uint256) public mintedAmount;
 
   constructor(bytes32 root) ERC721("Hero Infinity NFT", "HRINFT") {
     merkleRoot = root;
+  }
+
+  function testMint(uint256 amount) public {
+    for (uint256 i = 0; i < amount; i++) {
+      tokenIds.increment();
+      _safeMint(msg.sender, tokenIds.current());
+    }
   }
 
   /// @notice Used by whitelisted users to mint a maximum of 2 NFTs per address.
@@ -142,6 +156,25 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   /// @notice Used by the owner (DAO) to withdraw the eth raised during the sale.
   function withdrawETH() external onlyOwner {
     payable(msg.sender).transfer(address(this).balance);
+  }
+
+  function tokenURI(uint256 tokenId)
+    public
+    view
+    virtual
+    override
+    returns (string memory)
+  {
+    require(
+      _exists(tokenId),
+      "ERC721Metadata: URI query for nonexistent token"
+    );
+
+    string memory baseURI = _baseURI();
+    return
+      bytes(baseURI).length > 0
+        ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
+        : "";
   }
 
   /// @notice Used by the owner (DAO) to reveal the NFTs.
