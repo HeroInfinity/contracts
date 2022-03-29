@@ -114,14 +114,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
         uint256 currentPointer = publicPointer;
         uint256 newPointer = currentPointer + amount;
         require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
-
-        uint256 mintPrice = publicMintPrice;
-        // uint256 nodeCount = HRINodePool(nodePool).getNodeNumberOf(account);
-        // if (nodeCount > 4) {
-        //     mintPrice = whitelistMintPrice;
-        // }
-
-        require(amount * mintPrice <= msg.value, "WRONG_ETH_VALUE");
+        require(amount * mintPrice() <= msg.value, "WRONG_ETH_VALUE");
 
         publicPointer = newPointer;
         mintedAmount[account] = mintedWallet;
@@ -129,6 +122,15 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
         for (uint256 i = 0; i < amount; i++) {
             _safeMint(account, currentPointer + i);
         }
+    }
+
+    function mintPrice() public view returns (uint256) {
+        uint256 price = publicMintPrice;
+        // uint256 nodeCount = HRINodePool(nodePool).getNodeNumberOf(account);
+        // if (nodeCount > 4) {
+        //     mintPrice = whitelistMintPrice;
+        // }
+        return price;
     }
 
     /// @return `true` if the mint event is open, otherwise `false`.
