@@ -56,7 +56,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     /// @notice Number of NFTs minted by each address.
     mapping(address => uint256) public mintedAmount;
 
-    constructor(address _pool) ERC721("TEST Cards", "TESTC") {
+    constructor(address _pool) ERC721("Hero Infinity Cards", "HRIC") {
         nodePool = _pool;
     }
 
@@ -116,10 +116,10 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
         require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
 
         uint256 mintPrice = publicMintPrice;
-        uint256 nodeCount = HRINodePool(nodePool).getNodeNumberOf(account);
-        if (nodeCount > 4) {
-            mintPrice = whitelistMintPrice;
-        }
+        // uint256 nodeCount = HRINodePool(nodePool).getNodeNumberOf(account);
+        // if (nodeCount > 4) {
+        //     mintPrice = whitelistMintPrice;
+        // }
 
         require(amount * mintPrice >= msg.value, "WRONG_ETH_VALUE");
 
@@ -148,6 +148,11 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     /// @notice Allows the owner to set the sale open after nft mint event.
     function setSaleOpen(bool _open) external onlyOwner {
         isSaleEnabled = _open;
+    }
+
+    /// @notice Allows the owner to reserve all NFT cards.
+    function setReserved(bool _open) external onlyOwner {
+        isReserved = _open;
     }
 
     /// @notice Allows the owner to set price set.
