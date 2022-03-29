@@ -11,9 +11,10 @@ async function main() {
   const HeroInfinityNFT = await hre.ethers.getContractFactory(
     "HeroInfinityNFT"
   );
-  const nft = await HeroInfinityNFT.deploy(
-    "0x07b3551fbbe31c226acf05c77804802a9a0c7109cf9624d09c099991762d8df6"
-  );
+
+  const nodepool = "0xFAd5Ef0F347eb7bB89E798B5d026F60aFA3E2bF4";
+
+  const nft = await HeroInfinityNFT.deploy(nodepool);
 
   await nft.deployed();
 
@@ -22,9 +23,7 @@ async function main() {
   try {
     await hre.run("verify:verify", {
       address: nft.address,
-      constructorArguments: [
-        "0x07b3551fbbe31c226acf05c77804802a9a0c7109cf9624d09c099991762d8df6",
-      ],
+      constructorArguments: [nodepool],
     });
   } catch (err) {
     console.log(err);
