@@ -121,7 +121,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
         //     mintPrice = whitelistMintPrice;
         // }
 
-        require(amount * mintPrice >= msg.value, "WRONG_ETH_VALUE");
+        require(amount * mintPrice <= msg.value, "WRONG_ETH_VALUE");
 
         publicPointer = newPointer;
         mintedAmount[account] = mintedWallet;
