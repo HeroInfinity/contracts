@@ -20,7 +20,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   uint256 public constant HIGHEST_PUBLIC = 1078;
 
   /// @notice Price of each NFT for whitelisted users (+ gas).
-  uint256 public constant MINT_PRICE = 0.3 ether;
+  uint256 public mintPrice = 0.01 ether;
 
   /// @dev Root of the merkle tree used for the whitelist.
   bytes32 public immutable merkleRoot;
@@ -110,7 +110,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     uint256 currentPointer = publicPointer;
     uint256 newPointer = currentPointer + amount;
     require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
-    require(amount * MINT_PRICE == msg.value, "WRONG_ETH_VALUE");
+    require(amount * mintPrice == msg.value, "WRONG_ETH_VALUE");
 
     publicPointer = newPointer;
     mintedAmount[account] = mintedWallet;
@@ -186,5 +186,9 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
 
   function _baseURI() internal view override returns (string memory) {
     return baseUri;
+  }
+
+  function setMintPrice(uint256 price) external onlyOwner {
+    mintPrice = price;
   }
 }

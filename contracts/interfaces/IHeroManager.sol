@@ -20,5 +20,5 @@ interface IHeroManager {
 
   function heroPrimaryAttribute(uint256 heroId) external view returns (uint8);
 
-  function heroLevel(uint256 heroId) external view returns (uint8)
+  function heroLevel(uint256 heroId) external view returns (uint8);
 }

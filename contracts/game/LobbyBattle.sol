@@ -34,7 +34,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   IERC20 public token;
   IERC721 public nft;
 
-  uint256 private benefitMultiplier = 2.5;
+  uint256 private benefitMultiplier = 250;
 
   // lobbiesRefreshed[capacity (1, 3, 5)][address] = LobbyRefreshInfo
   mapping(uint256 => mapping(address => LobbyRefreshInfo))
@@ -89,7 +89,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     require(lobby.capacity == heroIds.length, "LobbyBattle: wrong heroes");
     require(lobby.finishedAt == 0, "LobbyBattle: already finished");
     require(
-      token.transferFrom(msg.sender, address(this), lobbyFees[capacity]),
+      token.transferFrom(msg.sender, address(this), lobbyFees[lobby.capacity]),
       "LobbyBattle: not enough fee"
     );
 
@@ -105,7 +105,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
     token.transfer(
       lobby.winner == 1 ? lobby.host : lobby.client,
-      lobbyFees[capacity] * benefitMultiplier
+      (lobbyFees[lobby.capacity] * benefitMultiplier) / 100
     );
   }
 
@@ -138,9 +138,9 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   }
 
   function contest1vs1(
-    uint256[] calldata hostHeroes,
-    uint256[] calldata clientHeroes
-  ) internal returns (uint8) {
+    uint256[] memory hostHeroes,
+    uint256[] memory clientHeroes
+  ) internal view returns (uint8) {
     uint256 hostHero = hostHeroes[0];
     uint256 clientHero = clientHeroes[0];
 
@@ -181,7 +181,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
           }
           return 2; // client win
         } else if (hostHeroPower == clientHeroPower) {
-          return random(1, 2);
+          return uint8(random(1, 2));
         } else {
           uint256 dice = random(1, 100);
           if (dice <= 70) {
@@ -220,7 +220,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
         } else if (hostHeroPower == clientHeroPower) {
           // same level and same power
 
-          return random(1, 2); // 50%:50%
+          return uint8(random(1, 2)); // 50%:50%
         } else {
           // same level but agility's power is greater than strength: 80% chance for agility, 20% for strength
           uint256 dice = random(1, 100);
