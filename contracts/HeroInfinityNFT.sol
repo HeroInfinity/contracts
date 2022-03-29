@@ -27,11 +27,11 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     uint256 public constant HIGHEST_PUBLIC = 1078;
 
     /// @notice Price of each NFT for whitelisted users.
-    uint256 public whitelistMintPrice = 0.25 ether;
+    uint256 public whitelistMintPrice = 0.0025 ether;
     /// @notice Price of each NFT for users in mint event.
-    uint256 public publicMintPrice = 0.35 ether;
+    uint256 public publicMintPrice = 0.0035 ether;
     /// @notice Price of each NFT for users after mint event.
-    uint256 public saleMintPrice = 0.4 ether;
+    uint256 public saleMintPrice = 0.004 ether;
 
     /// @notice Mint start timestamp.
     uint256 public mintStartTimestamp;
@@ -56,7 +56,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     /// @notice Number of NFTs minted by each address.
     mapping(address => uint256) public mintedAmount;
 
-    constructor(address _pool) ERC721("Hero Infinity Cards", "HRIC") {
+    constructor(address _pool) ERC721("TEST Cards", "TESTC") {
         nodePool = _pool;
     }
 
@@ -121,7 +121,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
             mintPrice = whitelistMintPrice;
         }
 
-        require(amount * mintPrice == msg.value, "WRONG_ETH_VALUE");
+        require(amount * mintPrice >= msg.value, "WRONG_ETH_VALUE");
 
         publicPointer = newPointer;
         mintedAmount[account] = mintedWallet;
@@ -169,8 +169,8 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
         uint256 _mintEndTimestamp
     ) external onlyOwner {
         require(
-            _mintStartTimestamp > _mintEndTimestamp &&
-                _mintEndTimestamp > block.timestamp,
+            _mintEndTimestamp > _mintStartTimestamp &&
+                _mintStartTimestamp > block.timestamp,
             "INVALID_TIMESTAMPS"
         );
 
