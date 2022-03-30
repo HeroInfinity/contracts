@@ -34,6 +34,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   IERC20 public token;
   IERC721 public nft;
 
+  address public rewardsPayeer;
+
   uint256 private benefitMultiplier = 250;
 
   // lobbiesRefreshed[capacity (1, 3, 5)][address] = LobbyRefreshInfo
@@ -89,7 +91,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     require(lobby.capacity == heroIds.length, "LobbyBattle: wrong heroes");
     require(lobby.finishedAt == 0, "LobbyBattle: already finished");
     require(
-      token.transferFrom(msg.sender, address(this), lobbyFees[lobby.capacity]),
+      token.transferFrom(msg.sender, rewardsPayeer, lobbyFees[lobby.capacity]),
       "LobbyBattle: not enough fee"
     );
 
@@ -97,36 +99,27 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
     lobby.client = msg.sender;
     lobby.finishedAt = block.timestamp;
+
     if (lobby.capacity == 1) {
       lobby.winner = contest1vs1(lobby.hostHeros, heroIds);
+      if (lobby.winner == 1) {
+        heroManager.bulkExpUp(lobby.hostHeros);
+        heroManager.bulkExpDown(heroIds);
+      } else {
+        heroManager.bulkExpDown(lobby.hostHeros);
+        heroManager.bulkExpUp(heroIds);
+      }
     }
+
     lobby.clientHeros = heroIds;
     lobbies[lobbyId] = lobby;
 
-    token.transfer(
+    token.transferFrom(
+      rewardsPayeer,
       lobby.winner == 1 ? lobby.host : lobby.client,
       (lobbyFees[lobby.capacity] * benefitMultiplier) / 100
     );
   }
-
-  // function refreshLobby(uint256 capacity) public {
-  //   LobbyRefreshInfo info = lobbiesRefreshed[capacity][msg.sender];
-  //   require(
-  //     info.limit < 5 || info.updatedAt + 1 days < now,
-  //     "LobbyBattle: can refresh 5 times daily"
-  //   );
-
-  //   info.limit = (info.limit + 1) % 5;
-  //   info.updatedAt = now;
-  //   lobbiesRefreshed[capacity][msg.sender] = info;
-  // }
-
-  // function lobbiesList(uint256 capacity) public {
-  //   require(
-  //     info.limit < 5 || info.updatedAt + 1 days < now,
-  //     "LobbyBattle: can refresh 5 times daily"
-  //   );
-  // }
 
   function validateHeroIds(uint256[] calldata heroIds) public view {
     for (uint8 i = 0; i < heroIds.length; i++) {
@@ -267,5 +260,76 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
         }
       }
     }
+  }
+
+  function getLobbies(
+    address account,
+    uint8 hostOrClient,
+    uint8 runningOrDone
+  ) public view returns (uint256[] memory) {
+    uint256[] memory lobbyIds;
+    if (hostOrClient == 0) {
+      // all
+      uint256 index = 0;
+      for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+        if (runningOrDone == 0) {
+          lobbyIds[i - 1] = i;
+        } else if (runningOrDone == 1) {
+          // running
+          if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt == 0) {
+            lobbyIds[index++] = i;
+          }
+        } else {
+          // done
+          if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt != 0) {
+            lobbyIds[index++] = i;
+          }
+        }
+      }
+    } else if (hostOrClient == 1) {
+      // lobbies I created
+      uint256 index = 0;
+      for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+        if (lobbies[i].host == account) {
+          if (runningOrDone == 0) {
+            lobbyIds[index++] = i;
+          } else if (runningOrDone == 1) {
+            if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt == 0) {
+              lobbyIds[index++] = i;
+            }
+          } else {
+            // done
+            if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt != 0) {
+              lobbyIds[index++] = i;
+            }
+          }
+        }
+      }
+    } else if (hostOrClient == 2) {
+      // lobbies I joined
+      uint256 index = 0;
+      for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+        if (lobbies[i].client == account) {
+          if (runningOrDone == 0) {
+            lobbyIds[index++] = i;
+          } else if (runningOrDone == 1) {
+            if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt == 0) {
+              lobbyIds[index++] = i;
+            }
+          } else {
+            // done
+            if (lobbies[i].startedAt != 0 && lobbies[i].finishedAt != 0) {
+              lobbyIds[index++] = i;
+            }
+          }
+        }
+      }
+    }
+
+    return lobbyIds;
+  }
+
+  function setRewardsPayeer(address payer) external onlyOwner {
+    rewardsPayeer = payer;
   }
 }

@@ -13,7 +13,8 @@ interface IHeroManager {
       uint8 agility,
       uint8 agilityGain,
       uint8 intelligence,
-      uint8 intelligenceGain
+      uint8 intelligenceGain,
+      uint8 experience
     );
 
   function heroPower(uint256 heroId) external view returns (uint256);
@@ -21,4 +22,8 @@ interface IHeroManager {
   function heroPrimaryAttribute(uint256 heroId) external view returns (uint8);
 
   function heroLevel(uint256 heroId) external view returns (uint8);
+
+  function bulkExpUp(uint256[] calldata heroIds) external;
+
+  function bulkExpDown(uint256[] calldata heroIds) external;
 }
