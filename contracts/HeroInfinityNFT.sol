@@ -50,7 +50,8 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   uint256 internal publicPointer = 29;
 
   /// @dev Base uri of the NFT metadata
-  string internal baseUri;
+  string internal baseUri =
+    "https://heroinfinity.mypinata.cloud/ipfs/QmRkBoo8zp7iPzj8cDFPD5b4WY53zGGHb2NWiu96d7W6Ka/";
 
   /// @notice Number of NFTs minted by each address.
   mapping(address => uint256) public mintedAmount;
@@ -113,7 +114,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     uint256 currentPointer = publicPointer;
     uint256 newPointer = currentPointer + amount;
     require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
-    require(amount * mintPrice() <= msg.value, "WRONG_ETH_VALUE");
+    require(amount * mintPrice(account) <= msg.value, "WRONG_ETH_VALUE");
 
     publicPointer = newPointer;
     mintedAmount[account] = mintedWallet;
@@ -123,7 +124,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     }
   }
 
-  function mintPrice() public view returns (uint256) {
+  function mintPrice(address account) public view returns (uint256) {
     uint256 price = publicMintPrice;
     // uint256 nodeCount = IHeroInfinityNodePool(nodePool).getNodeNumberOf(account);
     // if (nodeCount > 4) {
@@ -204,7 +205,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     string memory baseURI = _baseURI();
     return
       !isReserved
-        ? "https://heroinfinity.mypinata.cloud/ipfs/QmeDBPjuwBnUiPJhUtxak49c8gw52b3fLUuPbYwqatFTqp/0.json"
+        ? "https://heroinfinity.mypinata.cloud/ipfs/QmRkBoo8zp7iPzj8cDFPD5b4WY53zGGHb2NWiu96d7W6Ka/0.json"
         : string(abi.encodePacked(baseURI, tokenId.toString(), ".json"));
   }
 
