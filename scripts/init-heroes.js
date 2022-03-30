@@ -5,8 +5,10 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 const fetch = require("node-fetch");
+const { HERO_LIST } = require("@heroinfinity/sdk/lib/hero");
+const { formatBytes32String } = require("ethers/lib/utils");
 
-const HERO_MANAGER_ADDRESS = "0x07D51725b2a94c5e83f1761B4F676218F727596a";
+const HERO_MANAGER_ADDRESS = "0xb1C55A4ADA7E00E8682761faC0dEE6b8f48BEC02";
 const BASE_URI =
   "https://heroinfinity.mypinata.cloud/ipfs/QmdpC8hrgY5gVCTaNnn3vCzfXaeMLu1THxoGvBJrRPv165";
 
@@ -30,13 +32,19 @@ const attributeMap = {
   Agility: 1,
   Intelligence: 2,
 };
+const attackCapabilityMap = {
+  Melee: 1,
+  Ranged: 2,
+};
 
 async function main() {
   // We get the contract to deploy
   const HeroManager = await hre.ethers.getContractFactory("HeroManager");
   const heroManager = await HeroManager.attach(HERO_MANAGER_ADDRESS);
 
-  const nftIds = [0, 1, 2, 3, 4];
+  const nftIds = Array(29)
+    .fill(0)
+    .map((value, index) => index);
   const metadataPromises = nftIds.map((value) =>
     fetchAPI(`${BASE_URI}/${value}.json`)
   );
@@ -46,9 +54,14 @@ async function main() {
     heroManager.interface.encodeFunctionData("addHero", [
       value,
       [
+        formatBytes32String(
+          HERO_LIST.find((hero) => hero.fullName === heroesMetadata[index].name)
+            .name
+        ),
         1,
         rarityMap[heroesMetadata[index].attributes[0].value],
         attributeMap[heroesMetadata[index].attributes[1].value],
+        attackCapabilityMap[heroesMetadata[index].attributes[2].value],
         (heroesMetadata[index].attributes[3].value * 10 ** 18).toString(),
         (heroesMetadata[index].attributes[6].value * 10 ** 18).toString(),
         (heroesMetadata[index].attributes[4].value * 10 ** 18).toString(),
