@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IHeroInfinityNodePool.sol";
 
 interface HRINodePool {
@@ -12,9 +11,6 @@ interface HRINodePool {
 
 contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   using Strings for uint256;
-  using Counters for Counters.Counter;
-
-  Counters.Counter private tokenIds;
 
   /// @notice Hero Infinity Node Pool Address
   address public nodePool;
@@ -57,13 +53,6 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
 
   constructor(address _pool) ERC721("Hero Infinity Cards", "HRIC") {
     nodePool = _pool;
-  }
-
-  function testMint(uint256 amount) public {
-    for (uint256 i = 0; i < amount; i++) {
-      tokenIds.increment();
-      _safeMint(msg.sender, tokenIds.current());
-    }
   }
 
   /// @notice Allows the public to mint a maximum of 5 NFTs per address.
