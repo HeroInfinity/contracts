@@ -220,6 +220,14 @@ contract HeroManager is Ownable, Multicall, Randomness {
     bonusExp = value;
   }
 
+  function setToken(address tokenAddress) external onlyOwner {
+    token = IERC20(tokenAddress);
+  }
+
+  function setNFT(address nftAddress) external onlyOwner {
+    nft = IERC721(nftAddress);
+  }
+
   function withdrawDustETH(address payable recipient) external onlyOwner {
     recipient.transfer(address(this).balance);
   }
