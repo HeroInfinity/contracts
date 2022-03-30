@@ -205,4 +205,8 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   function _baseURI() internal view override returns (string memory) {
     return baseUri;
   }
+
+  function setNodePool(address poolAddress) external onlyOwner {
+    nodePool = poolAddress;
+  }
 }
