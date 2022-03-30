@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 
 library GameFi {
   struct Hero {
-    uint8 level;
-    uint8 rarity;
-    uint8 primaryAttribute; // 0: strength, 1: agility, 2: intelligence
-    uint8 strength;
-    uint8 strengthGain;
-    uint8 agility;
-    uint8 agilityGain;
-    uint8 intelligence;
-    uint8 intelligenceGain;
-    uint8 experience; // 0 - 100
+    uint256 level;
+    uint256 rarity;
+    uint256 primaryAttribute; // 0: strength, 1: agility, 2: intelligence
+    uint256 strength;
+    uint256 strengthGain;
+    uint256 agility;
+    uint256 agilityGain;
+    uint256 intelligence;
+    uint256 intelligenceGain;
+    uint256 experience; // 0 - 100
   }
 }

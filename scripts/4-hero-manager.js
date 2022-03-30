@@ -8,38 +8,23 @@ const { sleep } = require("./utils/sleep");
 
 async function main() {
   // We get the contract to deploy
-  const Randomness = await hre.ethers.getContractFactory("Randomness");
-  // const randomness = await Randomness.deploy();
+  const HeroManager = await hre.ethers.getContractFactory("HeroManager");
+  const heroManager = await HeroManager.deploy();
 
-  // await randomness.deployed();
+  await heroManager.deployed();
 
-  // const HeroManager = await hre.ethers.getContractFactory("HeroManager");
-  // const heroManager = await HeroManager.deploy();
+  await sleep(30000);
 
-  // await randomness.deployed();
-  // await heroManager.deployed();
-
-  // await sleep(30000);
-
-  // try {
-  //   await hre.run("verify:verify", {
-  //     address: randomness.address,
-  //     contract: "contracts/game/Randomness.sol:Randomness",
-  //   });
-  // } catch (err) {
-  //   console.log(err);
-  // }
   try {
     await hre.run("verify:verify", {
-      address: "0x23672E1565593bF54E89BEAF3E380eCa1cB3Bd09",
+      address: heroManager.address,
       contract: "contracts/game/HeroManager.sol:HeroManager",
     });
   } catch (err) {
     console.log(err);
   }
 
-  // console.log("Randomness deployed to: " + randomness.address);
-  // console.log("HeroManager deployed to: " + heroManager.address);
+  console.log("HeroManager deployed to: " + heroManager.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

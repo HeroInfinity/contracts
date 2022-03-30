@@ -15,7 +15,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   address public lobbyBattleAddress;
 
-  uint8 public constant HERO_MAX_LEVEL = 30;
+  uint256 public constant HERO_MAX_LEVEL = 30;
 
   uint256 public baseLevelUpFee = 50000 * 10**18; // 50,000 $HRI
   uint256 public bonusLevelUpFee = 10000 * 10**18; // 10,000 $HRI
@@ -24,7 +24,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
   uint256 public secondaryMultiplier = 8;
   uint256 public thirdMultiplier = 6;
 
-  uint8 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
+  uint256 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
 
   uint256 public rarityPowerBooster = 110;
 
@@ -39,7 +39,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
     heroes[heroId] = hero;
   }
 
-  function levelUp(uint256 heroId, uint8 levels) public {
+  function levelUp(uint256 heroId, uint256 levels) public {
     require(nft.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
 
     GameFi.Hero memory hero = heroes[heroId];
@@ -118,15 +118,15 @@ contract HeroManager is Ownable, Multicall, Randomness {
     return power;
   }
 
-  function heroPrimaryAttribute(uint256 heroId) public view returns (uint8) {
+  function heroPrimaryAttribute(uint256 heroId) public view returns (uint256) {
     return heroes[heroId].primaryAttribute;
   }
 
-  function heroLevel(uint256 heroId) public view returns (uint8) {
+  function heroLevel(uint256 heroId) public view returns (uint256) {
     return heroes[heroId].level;
   }
 
-  function heroBonusExp(uint256 heroId) public view returns (uint8) {
+  function heroBonusExp(uint256 heroId) public view returns (uint256) {
     return bonusExp - heroes[heroId].level + 1;
   }
 
@@ -137,7 +137,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
     );
 
     if (heroes[heroId].level < 30) {
-      uint8 gainedExp = heroBonusExp(heroId);
+      uint256 gainedExp = heroBonusExp(heroId);
       heroes[heroId].experience += gainedExp;
       if (heroes[heroId].experience >= 100) {
         heroes[heroId].experience -= 100;
@@ -152,7 +152,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
       "HeroManager: callable by lobby battle only"
     );
 
-    for (uint8 i = 0; i < heroIds.length; i++) {
+    for (uint256 i = 0; i < heroIds.length; i++) {
       expUp(heroIds[i]);
     }
   }
@@ -164,7 +164,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
     );
 
     if (heroes[heroId].level > 1 || heroes[heroId].experience > 0) {
-      uint8 gainedExp = heroBonusExp(heroId) / 2;
+      uint256 gainedExp = heroBonusExp(heroId) / 2;
       heroes[heroId].experience -= gainedExp;
       if (heroes[heroId].experience < 0) {
         if (heroes[heroId].level == 1) {
@@ -183,7 +183,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
       "HeroManager: callable by lobby battle only"
     );
 
-    for (uint8 i = 0; i < heroIds.length; i++) {
+    for (uint256 i = 0; i < heroIds.length; i++) {
       expDown(heroIds[i]);
     }
   }
@@ -216,7 +216,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
     bonusLevelUpFee = value;
   }
 
-  function setBonusExp(uint8 value) external onlyOwner {
+  function setBonusExp(uint256 value) external onlyOwner {
     bonusExp = value;
   }
 

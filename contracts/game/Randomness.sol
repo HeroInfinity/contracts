@@ -11,7 +11,15 @@ contract Randomness {
   {
     // sha3 and now have been deprecated
     uint256 randomNum = uint256(
-      keccak256(abi.encodePacked(block.difficulty, block.timestamp, msg.sender))
+      keccak256(
+        abi.encodePacked(
+          block.difficulty,
+          block.timestamp,
+          msg.sender,
+          min,
+          max
+        )
+      )
     );
     // convert hash to integer
 

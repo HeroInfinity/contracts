@@ -19,12 +19,12 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256[] clientHeros;
     uint256 startedAt;
     uint256 finishedAt;
-    uint8 winner; // 1: host, 2 : client, 0: in-progress
+    uint256 winner; // 1: host, 2 : client, 0: in-progress
   }
 
   struct LobbyRefreshInfo {
     uint256 updatedAt;
-    uint8 limit;
+    uint256 limit;
   }
 
   Counters.Counter private lobbyIterator;
@@ -122,7 +122,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   }
 
   function validateHeroIds(uint256[] calldata heroIds) public view {
-    for (uint8 i = 0; i < heroIds.length; i++) {
+    for (uint256 i = 0; i < heroIds.length; i++) {
       require(
         nft.ownerOf(heroIds[i]) == msg.sender,
         "LobbyBattle: not hero owner"
@@ -133,20 +133,22 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   function contest1vs1(
     uint256[] memory hostHeroes,
     uint256[] memory clientHeroes
-  ) internal view returns (uint8) {
+  ) internal view returns (uint256) {
     uint256 hostHero = hostHeroes[0];
     uint256 clientHero = clientHeroes[0];
 
     uint256 hostHeroPower = heroManager.heroPower(hostHero);
     uint256 clientHeroPower = heroManager.heroPower(clientHero);
 
-    uint8 hostHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(hostHero);
-    uint8 hostHeroLevel = heroManager.heroLevel(hostHero);
+    uint256 hostHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(
+      hostHero
+    );
+    uint256 hostHeroLevel = heroManager.heroLevel(hostHero);
 
-    uint8 clientHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(
+    uint256 clientHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(
       clientHero
     );
-    uint8 clientHeroLevel = heroManager.heroLevel(clientHero);
+    uint256 clientHeroLevel = heroManager.heroLevel(clientHero);
 
     // strength vs strength, agility vs agility or intelligence vs intelligence
     if (hostHeroPrimaryAttribute == clientHeroPrimaryAttribute) {
@@ -174,7 +176,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
           }
           return 2; // client win
         } else if (hostHeroPower == clientHeroPower) {
-          return uint8(random(1, 2));
+          return uint256(random(1, 2));
         } else {
           uint256 dice = random(1, 100);
           if (dice <= 70) {
@@ -213,7 +215,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
         } else if (hostHeroPower == clientHeroPower) {
           // same level and same power
 
-          return uint8(random(1, 2)); // 50%:50%
+          return uint256(random(1, 2)); // 50%:50%
         } else {
           // same level but agility's power is greater than strength: 80% chance for agility, 20% for strength
           uint256 dice = random(1, 100);
@@ -264,8 +266,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   function getLobbies(
     address account,
-    uint8 hostOrClient,
-    uint8 runningOrDone
+    uint256 hostOrClient,
+    uint256 runningOrDone
   ) public view returns (uint256[] memory) {
     uint256[] memory lobbyIds;
     if (hostOrClient == 0) {
