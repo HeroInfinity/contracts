@@ -50,8 +50,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   uint256 internal publicPointer = 29;
 
   /// @dev Base uri of the NFT metadata
-  string internal baseUri =
-    "https://heroinfinity.mypinata.cloud/ipfs/QmRkBoo8zp7iPzj8cDFPD5b4WY53zGGHb2NWiu96d7W6Ka/";
+  string internal baseUri;
 
   /// @notice Number of NFTs minted by each address.
   mapping(address => uint256) public mintedAmount;
@@ -207,7 +206,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
     string memory baseURI = _baseURI();
     return
       !isReserved
-        ? "https://heroinfinity.mypinata.cloud/ipfs/QmRkBoo8zp7iPzj8cDFPD5b4WY53zGGHb2NWiu96d7W6Ka/0.json"
+        ? "https://heroinfinity.mypinata.cloud/ipfs/QmRqqznPbCUdeJArzUYLMiuGrepmJvmjbiTopYMpTJbABb"
         : string(abi.encodePacked(baseURI, tokenId.toString(), ".json"));
   }
 
