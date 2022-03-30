@@ -15,15 +15,18 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   address public lobbyBattleAddress;
 
+  uint8 public constant HERO_MAX_LEVEL = 30;
+
   uint256 public baseLevelUpFee = 50000 * 10**18; // 50,000 $HRI
   uint256 public bonusLevelUpFee = 10000 * 10**18; // 10,000 $HRI
-  uint8 public heroMaxLevel = 30;
 
   uint256 public primaryPowerMultiplier = 10;
   uint256 public secondaryMultiplier = 8;
   uint256 public thirdMultiplier = 6;
 
   uint8 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
+
+  uint256 public rarityPowerBooster = 110;
 
   mapping(uint256 => GameFi.Hero) public heroes;
 
@@ -41,9 +44,9 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
     GameFi.Hero memory hero = heroes[heroId];
 
-    require(hero.level < heroMaxLevel, "HeroManager: hero max level");
+    require(hero.level < HERO_MAX_LEVEL, "HeroManager: hero max level");
     require(
-      hero.level + levels <= heroMaxLevel,
+      hero.level + levels <= HERO_MAX_LEVEL,
       "HeroManager: too many levels up"
     );
 
@@ -97,6 +100,20 @@ contract HeroManager is Ownable, Multicall, Randomness {
       secondaryMultiplier +
       stat3 *
       thirdMultiplier;
+
+    if (hero.rarity == 1) {
+      // Rare
+      power = (power * rarityPowerBooster) / 100;
+    } else if (hero.rarity == 2) {
+      // Mythical
+      power = (power * (rarityPowerBooster**2)) / (100**2);
+    } else if (hero.rarity == 3) {
+      // Legendary
+      power = (power * (rarityPowerBooster**3)) / (100**3);
+    } else if (hero.rarity == 4) {
+      // Immortal
+      power = (power * (rarityPowerBooster**4)) / (100**4);
+    }
 
     return power;
   }
@@ -174,4 +191,38 @@ contract HeroManager is Ownable, Multicall, Randomness {
   function setLobbyBattle(address lbAddr) external onlyOwner {
     lobbyBattleAddress = lbAddr;
   }
+
+  function setRarityPowerBooster(uint256 value) external onlyOwner {
+    rarityPowerBooster = value;
+  }
+
+  function setPrimaryPowerMultiplier(uint256 value) external onlyOwner {
+    primaryPowerMultiplier = value;
+  }
+
+  function setSecondaryMultiplier(uint256 value) external onlyOwner {
+    secondaryMultiplier = value;
+  }
+
+  function setThirdMultiplier(uint256 value) external onlyOwner {
+    thirdMultiplier = value;
+  }
+
+  function setBaseLevelUpFee(uint256 value) external onlyOwner {
+    baseLevelUpFee = value;
+  }
+
+  function setBonusLevelUpFee(uint256 value) external onlyOwner {
+    bonusLevelUpFee = value;
+  }
+
+  function setBonusExp(uint8 value) external onlyOwner {
+    bonusExp = value;
+  }
+
+  function withdrawDustETH(address payable recipient) external onlyOwner {
+    recipient.transfer(address(this).balance);
+  }
+
+  receive() external payable {}
 }
