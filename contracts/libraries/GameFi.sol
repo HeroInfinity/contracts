@@ -12,6 +12,7 @@ library GameFi {
     uint256 level;
     uint256 rarity;
     uint256 primaryAttribute; // 0: strength, 1: agility, 2: intelligence
+    uint256 attackCapability; // 1: meleee, 2: ranged
     uint256 strength;
     uint256 strengthGain;
     uint256 agility;
