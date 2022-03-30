@@ -126,10 +126,12 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable {
 
   function mintPrice(address account) public view returns (uint256) {
     uint256 price = publicMintPrice;
-    // uint256 nodeCount = IHeroInfinityNodePool(nodePool).getNodeNumberOf(account);
-    // if (nodeCount > 4) {
-    //     mintPrice = whitelistMintPrice;
-    // }
+    uint256 nodeCount = IHeroInfinityNodePool(nodePool).getNodeNumberOf(
+      account
+    );
+    if (nodeCount > 4) {
+      price = whitelistMintPrice;
+    }
     return price;
   }
 
