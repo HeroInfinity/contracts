@@ -5,10 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IHeroInfinityNodePool.sol";
 
-interface HRINodePool {
-  function getNodeNumberOf(address account) external view returns (uint256);
-}
-
 contract HeroInfinityNFT is ERC721Enumerable, Ownable {
   using Strings for uint256;
 
