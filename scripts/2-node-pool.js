@@ -14,7 +14,7 @@ async function main() {
 
   await nodePool.deployed();
 
-  await sleep(30000);
+  await sleep(60000);
 
   try {
     await hre.run("verify:verify", {

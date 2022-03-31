@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
 const { HERO_LIST } = require("@heroinfinity/sdk/lib/hero");
 const { formatBytes32String } = require("ethers/lib/utils");
 
-const HERO_MANAGER_ADDRESS = "0xedAD9C02964BB613d83c01cb5c02cB4b4128551c";
+const HERO_MANAGER_ADDRESS = "0x0a66674c98ae571C2eA1c5f986f46dD13630D02D";
 const BASE_URI =
   "https://heroinfinity.mypinata.cloud/ipfs/QmdpC8hrgY5gVCTaNnn3vCzfXaeMLu1THxoGvBJrRPv165";
 

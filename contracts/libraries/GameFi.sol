@@ -9,16 +9,16 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 library GameFi {
   struct Hero {
     bytes32 name; // this is considered as hero's unique id in the ecosystem
-    uint8 level;
-    uint8 rarity;
-    uint8 primaryAttribute; // 0: strength, 1: agility, 2: intelligence
-    uint8 attackCapability; // 1: meleee, 2: ranged
+    uint256 level;
+    uint256 rarity;
+    uint256 primaryAttribute; // 0: strength, 1: agility, 2: intelligence
+    uint256 attackCapability; // 1: meleee, 2: ranged
     uint256 strength;
     uint256 strengthGain;
     uint256 agility;
     uint256 agilityGain;
     uint256 intelligence;
     uint256 intelligenceGain;
-    uint8 experience; // 0 - 100
+    uint256 experience; // 0 - 100
   }
 }

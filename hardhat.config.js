@@ -42,7 +42,7 @@ module.exports = {
       ],
     },
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
+      url: "https://rinkeby.infura.io/v3/4826dd7278434ab8be5e4706905f0a15",
       accounts: [
         process.env.ACCOUNT1,
         // process.env.ACCOUNT2,
