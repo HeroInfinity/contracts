@@ -10,12 +10,13 @@ import "../libraries/GameFi.sol";
 
 /** Contract handles every single Hero data */
 contract HeroManager is Ownable, Multicall, Randomness {
-  IERC20 public token;
-  IERC721 public nft;
+  IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC721 public nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
 
   address public lobbyBattleAddress;
 
   uint256 public constant HERO_MAX_LEVEL = 30;
+  uint256 public constant HERO_MAX_EXP = 100;
 
   uint256 public baseLevelUpFee = 50000 * 10**18; // 50,000 $HRI
   uint256 public bonusLevelUpFee = 10000 * 10**18; // 10,000 $HRI
@@ -24,16 +25,11 @@ contract HeroManager is Ownable, Multicall, Randomness {
   uint256 public secondaryMultiplier = 8;
   uint256 public thirdMultiplier = 6;
 
-  uint256 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
-
   uint256 public rarityPowerBooster = 110;
 
   mapping(uint256 => GameFi.Hero) public heroes;
 
-  constructor() {
-    token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-    nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
-  }
+  constructor() {}
 
   function addHero(uint256 heroId, GameFi.Hero calldata hero)
     external
@@ -127,65 +123,29 @@ contract HeroManager is Ownable, Multicall, Randomness {
     return heroes[heroId].level;
   }
 
-  function heroBonusExp(uint256 heroId) public view returns (uint256) {
-    return bonusExp - heroes[heroId].level + 1;
-  }
-
-  function expUp(uint256 heroId) public {
+  function expUp(uint256 heroId, uint256 exp) public {
     require(
       msg.sender == lobbyBattleAddress || msg.sender == address(this),
       "HeroManager: callable by lobby battle only"
     );
 
-    if (heroes[heroId].level < 30) {
-      uint256 gainedExp = heroBonusExp(heroId);
-      heroes[heroId].experience += gainedExp;
-      if (heroes[heroId].experience >= 100) {
-        heroes[heroId].experience -= 100;
+    if (heroes[heroId].level < HERO_MAX_LEVEL) {
+      heroes[heroId].experience += exp;
+      if (heroes[heroId].experience >= HERO_MAX_EXP) {
+        heroes[heroId].experience -= HERO_MAX_EXP;
         heroes[heroId].level += 1;
       }
     }
   }
 
-  function bulkExpUp(uint256[] calldata heroIds) external {
+  function bulkExpUp(uint256[] calldata heroIds, uint256 exp) external {
     require(
       msg.sender == lobbyBattleAddress,
       "HeroManager: callable by lobby battle only"
     );
 
     for (uint256 i = 0; i < heroIds.length; i++) {
-      expUp(heroIds[i]);
-    }
-  }
-
-  function expDown(uint256 heroId) public {
-    require(
-      msg.sender == lobbyBattleAddress || msg.sender == address(this),
-      "HeroManager: callable by lobby battle only"
-    );
-
-    if (heroes[heroId].level > 1 || heroes[heroId].experience > 0) {
-      uint256 gainedExp = heroBonusExp(heroId) / 2;
-      heroes[heroId].experience -= gainedExp;
-      if (heroes[heroId].experience < 0) {
-        if (heroes[heroId].level == 1) {
-          heroes[heroId].experience = 0;
-        } else {
-          heroes[heroId].experience += 100;
-          heroes[heroId].level -= 1;
-        }
-      }
-    }
-  }
-
-  function bulkExpDown(uint256[] calldata heroIds) external {
-    require(
-      msg.sender == lobbyBattleAddress,
-      "HeroManager: callable by lobby battle only"
-    );
-
-    for (uint256 i = 0; i < heroIds.length; i++) {
-      expDown(heroIds[i]);
+      expUp(heroIds[i], exp);
     }
   }
 
@@ -215,10 +175,6 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   function setBonusLevelUpFee(uint256 value) external onlyOwner {
     bonusLevelUpFee = value;
-  }
-
-  function setBonusExp(uint256 value) external onlyOwner {
-    bonusExp = value;
   }
 
   function setToken(address tokenAddress) external onlyOwner {
