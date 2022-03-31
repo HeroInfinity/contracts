@@ -30,7 +30,10 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   mapping(uint256 => GameFi.Hero) public heroes;
 
-  constructor() {}
+  constructor() {
+    token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+    nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
+  }
 
   function addHero(uint256 heroId, GameFi.Hero calldata hero)
     external
@@ -41,18 +44,18 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   function levelUp(uint256 heroId, uint8 levels) public {
     require(nft.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
-
-    GameFi.Hero memory hero = heroes[heroId];
-
-    require(hero.level < HERO_MAX_LEVEL, "HeroManager: hero max level");
     require(
-      hero.level + levels <= HERO_MAX_LEVEL,
+      heroes[heroId].level < HERO_MAX_LEVEL,
+      "HeroManager: hero max level"
+    );
+    require(
+      heroes[heroId].level + levels <= HERO_MAX_LEVEL,
       "HeroManager: too many levels up"
     );
 
     uint256 nextLevelUpFee = baseLevelUpFee +
       bonusLevelUpFee *
-      (hero.level - 1);
+      (heroes[heroId].level - 1);
 
     uint256 totalLevelUpFee = nextLevelUpFee *
       levels +
@@ -63,12 +66,10 @@ contract HeroManager is Ownable, Multicall, Randomness {
       "HeroManager: not enough fee"
     );
 
-    hero.level += levels;
-    hero.strength += hero.strengthGain * levels;
-    hero.agility += hero.agilityGain * levels;
-    hero.strength += hero.intelligenceGain * levels;
-
-    heroes[heroId] = hero;
+    heroes[heroId].level += levels;
+    heroes[heroId].strength += heroes[heroId].strengthGain * levels;
+    heroes[heroId].agility += heroes[heroId].agilityGain * levels;
+    heroes[heroId].intelligence += heroes[heroId].intelligenceGain * levels;
   }
 
   function heroPower(uint256 heroId) public view returns (uint256) {

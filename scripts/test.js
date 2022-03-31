@@ -6,7 +6,7 @@
 const { constants } = require("ethers");
 const hre = require("hardhat");
 
-const HERO_MANAGER_ADDRESS = "0xb1C55A4ADA7E00E8682761faC0dEE6b8f48BEC02";
+const HERO_MANAGER_ADDRESS = "0xedAD9C02964BB613d83c01cb5c02cB4b4128551c";
 
 async function main() {
   // We get the contract to deploy
