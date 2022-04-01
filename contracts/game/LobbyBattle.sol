@@ -70,7 +70,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
     require(lobbyFees[capacity] > 0, "LobbyBattle: wrong lobby capacity");
     require(
-      token.transferFrom(msg.sender, address(this), lobbyFees[capacity]),
+      token.transferFrom(msg.sender, rewardsPayeer, lobbyFees[capacity]),
       "LobbyBattle: not enough fee"
     );
 
