@@ -163,10 +163,12 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   function validateHeroIds(uint256[] calldata heroIds, address owner)
     public
     view
+    returns (bool)
   {
     for (uint256 i = 0; i < heroIds.length; i++) {
       require(nft.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
     }
+    return true;
   }
 
   function contest1vs1(
@@ -308,58 +310,93 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     view
     returns (uint256[] memory)
   {
-    uint256[] memory lobbyIds;
+    uint256 count;
 
-    uint256 baseIndex = 0;
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (lobbies[i].finishedAt == 0 && lobbies[i].host != myAddr) {
-        lobbyIds[baseIndex++] = i;
+        count++;
       }
     }
 
-    return lobbyIds;
+    uint256 baseIndex = 0;
+    uint256[] memory result = new uint256[](count);
+    for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+      if (lobbies[i].finishedAt == 0 && lobbies[i].host != myAddr) {
+        result[baseIndex] = i;
+        baseIndex++;
+      }
+    }
+
+    return result;
   }
 
   function getMyLobbies(address myAddr) public view returns (uint256[] memory) {
-    uint256[] memory lobbyIds;
+    uint256 count;
 
-    uint256 baseIndex = 0;
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (lobbies[i].finishedAt == 0 && lobbies[i].host == myAddr) {
-        lobbyIds[baseIndex++] = i;
+        count++;
       }
     }
 
-    return lobbyIds;
+    uint256 baseIndex = 0;
+    uint256[] memory result = new uint256[](count);
+    for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+      if (lobbies[i].finishedAt == 0 && lobbies[i].host == myAddr) {
+        result[baseIndex] = i;
+        baseIndex++;
+      }
+    }
+
+    return result;
   }
 
   function getMyHistory(address myAddr) public view returns (uint256[] memory) {
-    uint256[] memory lobbyIds;
+    uint256 count;
 
-    uint256 baseIndex = 0;
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (
         lobbies[i].finishedAt > 0 &&
         (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
       ) {
-        lobbyIds[baseIndex++] = i;
+        count++;
       }
     }
 
-    return lobbyIds;
+    uint256 baseIndex = 0;
+    uint256[] memory result = new uint256[](count);
+    for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+      if (
+        lobbies[i].finishedAt > 0 &&
+        (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
+      ) {
+        result[baseIndex] = i;
+        baseIndex++;
+      }
+    }
+
+    return result;
   }
 
   function getAllHistory() public view returns (uint256[] memory) {
-    uint256[] memory lobbyIds;
+    uint256 count;
 
-    uint256 baseIndex = 0;
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (lobbies[i].finishedAt > 0) {
-        lobbyIds[baseIndex++] = i;
+        count++;
       }
     }
 
-    return lobbyIds;
+    uint256 baseIndex = 0;
+    uint256[] memory result = new uint256[](count);
+    for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
+      if (lobbies[i].finishedAt > 0) {
+        result[baseIndex] = i;
+        baseIndex++;
+      }
+    }
+
+    return result;
   }
 
   function heroBonusExp(uint256 heroId) public view returns (uint256) {
