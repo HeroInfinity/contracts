@@ -353,8 +353,10 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       uint256 hostHeroPower = heroManager.heroPower(hostHeroes[i]);
       hostPower += hostHeroPower;
 
-      uint256 clientHeroPower = heroManager.heroPower(clientHeroes[i]);
-      clientPower += clientHeroPower;
+      if (client != address(0)) {
+        uint256 clientHeroPower = heroManager.heroPower(clientHeroes[i]);
+        clientPower += clientHeroPower;
+      }
     }
 
     return (host, hostPower, client, clientPower);
