@@ -36,10 +36,10 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   IHeroManager public heroManager =
     IHeroManager(0x0c966628e4828958376a24ee66F5278A71c96aeE);
 
-  IERC20 public token;
-  IERC721 public nft;
+  IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC721 public nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
 
-  address public rewardsPayeer;
+  address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
 
   uint256 private benefitMultiplier = 250;
 
@@ -65,7 +65,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     bytes32 avatar,
     uint256[] calldata heroIds
   ) public {
-    validateHeroIds(heroIds);
+    validateHeroIds(heroIds, msg.sender);
 
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
     require(lobbyFees[capacity] > 0, "LobbyBattle: wrong lobby capacity");
@@ -100,6 +100,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   }
 
   function joinLobby(uint256 lobbyId, uint256[] calldata heroIds) public {
+    validateHeroIds(heroIds, msg.sender);
+
     require(lobbies[lobbyId].id == lobbyId, "LobbyBattle: lobby doesn't exist");
     require(
       lobbies[lobbyId].capacity == heroIds.length,
@@ -114,8 +116,6 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       ),
       "LobbyBattle: not enough fee"
     );
-
-    validateHeroIds(heroIds);
 
     lobbies[lobbyId].client = msg.sender;
     lobbies[lobbyId].finishedAt = block.timestamp;
@@ -160,12 +160,12 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     );
   }
 
-  function validateHeroIds(uint256[] calldata heroIds) public view {
+  function validateHeroIds(uint256[] calldata heroIds, address owner)
+    public
+    view
+  {
     for (uint256 i = 0; i < heroIds.length; i++) {
-      require(
-        nft.ownerOf(heroIds[i]) == msg.sender,
-        "LobbyBattle: not hero owner"
-      );
+      require(nft.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
     }
   }
 
@@ -373,4 +373,18 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   function setBonusExp(uint256 value) external onlyOwner {
     bonusExp = value;
   }
+
+  function setHeroManager(address hmAddr) external onlyOwner {
+    heroManager = IHeroManager(hmAddr);
+  }
+
+  function setLobbyFee(uint256 capacity, uint256 fee) external onlyOwner {
+    lobbyFees[capacity] = fee;
+  }
+
+  function withdrawDustETH(address payable recipient) external onlyOwner {
+    recipient.transfer(address(this).balance);
+  }
+
+  receive() external payable {}
 }
