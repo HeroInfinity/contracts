@@ -19,6 +19,6 @@ library GameFi {
     uint256 agilityGain;
     uint256 intelligence;
     uint256 intelligenceGain;
-    uint256 experience; // 0 - 100
+    uint256 experience; // (0 - 100) * 10**18
   }
 }

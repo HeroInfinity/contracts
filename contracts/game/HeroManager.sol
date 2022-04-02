@@ -16,7 +16,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
   address public lobbyBattleAddress;
 
   uint256 public constant HERO_MAX_LEVEL = 30;
-  uint256 public constant HERO_MAX_EXP = 100;
+  uint256 public constant HERO_MAX_EXP = 100 * 10**18;
 
   uint256 public baseLevelUpFee = 50000 * 10**18; // 50,000 $HRI
   uint256 public bonusLevelUpFee = 10000 * 10**18; // 10,000 $HRI
@@ -26,6 +26,9 @@ contract HeroManager is Ownable, Multicall, Randomness {
   uint256 public thirdMultiplier = 6;
 
   uint256 public rarityPowerBooster = 110;
+
+  uint256 public bonusExp = 30 * 10**18; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
+  uint256 public expDiff = 4;
 
   mapping(uint256 => GameFi.Hero) public heroes;
 
@@ -124,11 +127,12 @@ contract HeroManager is Ownable, Multicall, Randomness {
     return heroes[heroId].level;
   }
 
-  function expUp(uint256 heroId, uint256 exp) public {
+  function expUp(uint256 heroId, bool won) public {
     require(
       msg.sender == lobbyBattleAddress || msg.sender == address(this),
       "HeroManager: callable by lobby battle only"
     );
+    uint256 exp = won ? heroBonusExp(heroId) : heroBonusExp(heroId) / expDiff;
 
     if (heroes[heroId].level < HERO_MAX_LEVEL) {
       heroes[heroId].experience += exp;
@@ -139,15 +143,19 @@ contract HeroManager is Ownable, Multicall, Randomness {
     }
   }
 
-  function bulkExpUp(uint256[] calldata heroIds, uint256 exp) external {
+  function bulkExpUp(uint256[] calldata heroIds, bool won) external {
     require(
       msg.sender == lobbyBattleAddress,
       "HeroManager: callable by lobby battle only"
     );
 
     for (uint256 i = 0; i < heroIds.length; i++) {
-      expUp(heroIds[i], exp);
+      expUp(heroIds[i], won);
     }
+  }
+
+  function heroBonusExp(uint256 heroId) public view returns (uint256) {
+    return bonusExp - ((heroLevel(heroId) - 1) * 10**18);
   }
 
   function setLobbyBattle(address lbAddr) external onlyOwner {
@@ -184,6 +192,14 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   function setNFT(address nftAddress) external onlyOwner {
     nft = IERC721(nftAddress);
+  }
+
+  function setBonusExp(uint256 value) external onlyOwner {
+    bonusExp = value;
+  }
+
+  function setExpDiff(uint256 value) external onlyOwner {
+    expDiff = value;
   }
 
   function withdrawDustETH(address payable recipient) external onlyOwner {

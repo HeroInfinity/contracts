@@ -8,5 +8,5 @@ interface IHeroManager {
 
   function heroLevel(uint256 heroId) external view returns (uint256);
 
-  function bulkExpUp(uint256[] calldata heroIds, uint256 exp) external;
+  function bulkExpUp(uint256[] calldata heroIds, bool won) external;
 }

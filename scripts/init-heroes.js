@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
 const { HERO_LIST } = require("@heroinfinity/sdk/lib/hero");
 const { formatBytes32String } = require("ethers/lib/utils");
 
-const HERO_MANAGER_ADDRESS = "0x0c966628e4828958376a24ee66F5278A71c96aeE";
+const HERO_MANAGER_ADDRESS = "0x51624b86523c95175d4b3d145F2Ed9f884C683E2";
 const BASE_URI =
   "https://heroinfinity.mypinata.cloud/ipfs/QmdpC8hrgY5gVCTaNnn3vCzfXaeMLu1THxoGvBJrRPv165";
 
@@ -42,7 +42,9 @@ async function main() {
   const HeroManager = await hre.ethers.getContractFactory("HeroManager");
   const heroManager = await HeroManager.attach(HERO_MANAGER_ADDRESS);
 
-  const nftIds = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38];
+  const nftIds = Array(39)
+    .fill(0)
+    .map((v, index) => index);
   const metadataPromises = nftIds.map((value) =>
     fetchAPI(`${BASE_URI}/${value}.json`)
   );

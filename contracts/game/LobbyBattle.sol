@@ -32,7 +32,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   Counters.Counter private lobbyIterator;
 
   IHeroManager public heroManager =
-    IHeroManager(0x0c966628e4828958376a24ee66F5278A71c96aeE);
+    IHeroManager(0x51624b86523c95175d4b3d145F2Ed9f884C683E2);
 
   IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
   IERC721 public nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
@@ -43,17 +43,19 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   uint256 public heroPowerRange = 150 * 10**18;
 
-  uint256 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
+  uint256 public totalPlayers;
+  mapping(uint256 => address) public uniquePlayers;
+  mapping(address => bool) public registeredPlayers;
+  mapping(address => uint256) public playersFees;
+  mapping(address => uint256) public playersRewards;
 
   mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
     public lobbyHeroes;
   mapping(uint256 => mapping(address => uint256)) public lobbyHeroesCount;
   mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
-    public powers;
-
-  mapping(uint256 => uint256) public lobbyFees;
-
+    public lobbyPowers;
   mapping(uint256 => Lobby) public lobbies;
+  mapping(uint256 => uint256) public lobbyFees;
 
   event BattleFinished(
     uint256 indexed lobbyId,
@@ -90,6 +92,13 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       "LobbyBattle: not enough fee"
     );
 
+    if (!registeredPlayers[msg.sender]) {
+      uniquePlayers[totalPlayers] = msg.sender;
+      registeredPlayers[msg.sender] = true;
+      totalPlayers += 1;
+    }
+    playersFees[msg.sender] += lobbyFees[capacity];
+
     lobbyIterator.increment();
 
     uint256 lobbyId = lobbyIterator.current();
@@ -107,8 +116,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       lobbyFees[capacity],
       0
     );
-    powers[lobbyId][msg.sender][0] = minPower;
-    powers[lobbyId][msg.sender][1] = maxPower;
+    lobbyPowers[lobbyId][msg.sender][0] = minPower;
+    lobbyPowers[lobbyId][msg.sender][1] = maxPower;
 
     lobbies[lobbyId] = lobby;
 
@@ -139,19 +148,24 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       "LobbyBattle: wrong power range"
     );
     require(lobbies[lobbyId].finishedAt == 0, "LobbyBattle: already finished");
+
+    uint256 fee = lobbyFees[lobbies[lobbyId].capacity];
     require(
-      token.transferFrom(
-        msg.sender,
-        rewardsPayeer,
-        lobbyFees[lobbies[lobbyId].capacity]
-      ),
+      token.transferFrom(msg.sender, rewardsPayeer, fee),
       "LobbyBattle: not enough fee"
     );
 
+    if (!registeredPlayers[msg.sender]) {
+      uniquePlayers[totalPlayers] = msg.sender;
+      registeredPlayers[msg.sender] = true;
+      totalPlayers += 1;
+    }
+    playersFees[msg.sender] += fee;
+
     lobbies[lobbyId].client = msg.sender;
     lobbies[lobbyId].finishedAt = block.timestamp;
-    powers[lobbyId][msg.sender][0] = minPower;
-    powers[lobbyId][msg.sender][1] = maxPower;
+    lobbyPowers[lobbyId][msg.sender][0] = minPower;
+    lobbyPowers[lobbyId][msg.sender][1] = maxPower;
 
     uint256[] memory hostHeroes = new uint256[](heroIds.length);
 
@@ -161,20 +175,24 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     }
     lobbyHeroesCount[lobbyId][msg.sender] = heroIds.length;
 
-    if (lobbies[lobbyId].capacity == 1) {
-      lobbies[lobbyId].winner = contest1vs1(hostHeroes, heroIds);
-      if (lobbies[lobbyId].winner == 1) {
-        heroManager.bulkExpUp(hostHeroes, heroBonusExp(hostHeroes[0]));
-        heroManager.bulkExpUp(heroIds, heroBonusExp(heroIds[0]) / 2);
-      } else {
-        heroManager.bulkExpUp(hostHeroes, heroBonusExp(hostHeroes[0]) / 2);
-        heroManager.bulkExpUp(heroIds, heroBonusExp(heroIds[0]));
-      }
-    }
-
     lobbies[lobbyId].rewards =
       (lobbyFees[lobbies[lobbyId].capacity] * benefitMultiplier) /
       100;
+
+    if (lobbies[lobbyId].capacity == 1) {
+      lobbies[lobbyId].winner = contest1vs1(hostHeroes, heroIds);
+      if (lobbies[lobbyId].winner == 1) {
+        heroManager.bulkExpUp(hostHeroes, true);
+        heroManager.bulkExpUp(heroIds, false);
+
+        playersRewards[lobbies[lobbyId].host] += lobbies[lobbyId].rewards;
+      } else {
+        heroManager.bulkExpUp(hostHeroes, false);
+        heroManager.bulkExpUp(heroIds, true);
+
+        playersRewards[msg.sender] += lobbies[lobbyId].rewards;
+      }
+    }
 
     token.transferFrom(
       rewardsPayeer,
@@ -380,10 +398,10 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     address client = lobbies[lobbyId].client;
 
     return (
-      powers[lobbyId][host][0],
-      powers[lobbyId][host][1],
-      powers[lobbyId][client][0],
-      powers[lobbyId][client][1]
+      lobbyPowers[lobbyId][host][0],
+      lobbyPowers[lobbyId][host][1],
+      lobbyPowers[lobbyId][client][0],
+      lobbyPowers[lobbyId][client][1]
     );
   }
 
@@ -431,7 +449,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     return power;
   }
 
-  function getActiveLobbies(address myAddr)
+  function getActiveLobbies(address myAddr, uint256 capacity)
     public
     view
     returns (uint256[] memory)
@@ -439,7 +457,11 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 count;
 
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt == 0 && lobbies[i].host != myAddr) {
+      if (
+        lobbies[i].finishedAt == 0 &&
+        lobbies[i].capacity == capacity &&
+        lobbies[i].host != myAddr
+      ) {
         count++;
       }
     }
@@ -447,7 +469,11 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 baseIndex = 0;
     uint256[] memory result = new uint256[](count);
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt == 0 && lobbies[i].host != myAddr) {
+      if (
+        lobbies[i].finishedAt == 0 &&
+        lobbies[i].capacity == capacity &&
+        lobbies[i].host != myAddr
+      ) {
         result[baseIndex] = i;
         baseIndex++;
       }
@@ -456,11 +482,19 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     return result;
   }
 
-  function getMyLobbies(address myAddr) public view returns (uint256[] memory) {
+  function getMyLobbies(address myAddr, uint256 capacity)
+    public
+    view
+    returns (uint256[] memory)
+  {
     uint256 count;
 
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt == 0 && lobbies[i].host == myAddr) {
+      if (
+        lobbies[i].finishedAt == 0 &&
+        lobbies[i].capacity == capacity &&
+        lobbies[i].host == myAddr
+      ) {
         count++;
       }
     }
@@ -468,7 +502,11 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 baseIndex = 0;
     uint256[] memory result = new uint256[](count);
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt == 0 && lobbies[i].host == myAddr) {
+      if (
+        lobbies[i].finishedAt == 0 &&
+        lobbies[i].capacity == capacity &&
+        lobbies[i].host == myAddr
+      ) {
         result[baseIndex] = i;
         baseIndex++;
       }
@@ -477,12 +515,17 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     return result;
   }
 
-  function getMyHistory(address myAddr) public view returns (uint256[] memory) {
+  function getMyHistory(address myAddr, uint256 capacity)
+    public
+    view
+    returns (uint256[] memory)
+  {
     uint256 count;
 
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (
         lobbies[i].finishedAt > 0 &&
+        lobbies[i].capacity == capacity &&
         (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
       ) {
         count++;
@@ -494,6 +537,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
       if (
         lobbies[i].finishedAt > 0 &&
+        lobbies[i].capacity == capacity &&
         (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
       ) {
         result[baseIndex] = i;
@@ -504,11 +548,15 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     return result;
   }
 
-  function getAllHistory() public view returns (uint256[] memory) {
+  function getAllHistory(uint256 capacity)
+    public
+    view
+    returns (uint256[] memory)
+  {
     uint256 count;
 
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt > 0) {
+      if (lobbies[i].finishedAt > 0 && lobbies[i].capacity == capacity) {
         count++;
       }
     }
@@ -516,25 +564,17 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 baseIndex = 0;
     uint256[] memory result = new uint256[](count);
     for (uint256 i = 1; i <= lobbyIterator.current(); i++) {
-      if (lobbies[i].finishedAt > 0) {
+      if (lobbies[i].finishedAt > 0 && lobbies[i].capacity == capacity) {
         result[baseIndex] = i;
         baseIndex++;
       }
     }
 
     return result;
-  }
-
-  function heroBonusExp(uint256 heroId) public view returns (uint256) {
-    return bonusExp - heroManager.heroLevel(heroId) + 1;
   }
 
   function setRewardsPayeer(address payer) external onlyOwner {
     rewardsPayeer = payer;
-  }
-
-  function setBonusExp(uint256 value) external onlyOwner {
-    bonusExp = value;
   }
 
   function setHeroManager(address hmAddr) external onlyOwner {
