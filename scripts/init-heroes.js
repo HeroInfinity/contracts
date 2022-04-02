@@ -42,9 +42,7 @@ async function main() {
   const HeroManager = await hre.ethers.getContractFactory("HeroManager");
   const heroManager = await HeroManager.attach(HERO_MANAGER_ADDRESS);
 
-  const nftIds = Array(29)
-    .fill(0)
-    .map((value, index) => index);
+  const nftIds = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38];
   const metadataPromises = nftIds.map((value) =>
     fetchAPI(`${BASE_URI}/${value}.json`)
   );

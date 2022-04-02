@@ -6,6 +6,8 @@
 const hre = require("hardhat");
 const { sleep } = require("./utils/sleep");
 
+const HERO_MANAGER_ADDRESS = "0x0c966628e4828958376a24ee66F5278A71c96aeE";
+
 async function main() {
   // We get the contract to deploy
   const LobbyBattle = await hre.ethers.getContractFactory("LobbyBattle");
@@ -23,6 +25,11 @@ async function main() {
   } catch (err) {
     console.log(err);
   }
+
+  const HeroManager = await hre.ethers.getContractFactory("HeroManager");
+  const heroManager = HeroManager.attach(HERO_MANAGER_ADDRESS);
+
+  await heroManager.setLobbyBattle(lobbyBattle.address);
 
   console.log("LobbyBattle deployed to: " + lobbyBattle.address);
 }

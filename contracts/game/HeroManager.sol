@@ -35,6 +35,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
     external
     onlyOwner
   {
+    require(heroes[heroId].level == 0, "HeroManager: hero already added");
     heroes[heroId] = hero;
   }
 

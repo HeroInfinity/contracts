@@ -41,15 +41,25 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   uint256 private benefitMultiplier = 250;
 
+  uint256 public heroPowerRange = 150;
+
   uint256 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
 
   mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
     public lobbyHeroes;
   mapping(uint256 => mapping(address => uint256)) public lobbyHeroesCount;
+  mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
+    public powers;
 
   mapping(uint256 => uint256) public lobbyFees;
 
   mapping(uint256 => Lobby) public lobbies;
+
+  event BattleFinished(
+    uint256 indexed lobbyId,
+    address indexed host,
+    address indexed client
+  );
 
   constructor() {
     lobbyFees[1] = 5000 * 10**18;
@@ -58,14 +68,22 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   }
 
   function createLobby(
-    uint256 capacity,
     bytes32 name,
     bytes32 avatar,
+    uint256 capacity,
+    uint256 minPower,
+    uint256 maxPower,
     uint256[] calldata heroIds
   ) public {
     validateHeroIds(heroIds, msg.sender);
-
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
+    uint256 teamPower = getHeroesPower(heroIds);
+    require(
+      minPower <= teamPower &&
+        maxPower >= teamPower &&
+        maxPower - minPower == heroPowerRange,
+      "LobbyBattle: wrong power range"
+    );
     require(lobbyFees[capacity] > 0, "LobbyBattle: wrong lobby capacity");
     require(
       token.transferFrom(msg.sender, rewardsPayeer, lobbyFees[capacity]),
@@ -89,6 +107,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       lobbyFees[capacity],
       0
     );
+    powers[lobbyId][msg.sender][0] = minPower;
+    powers[lobbyId][msg.sender][1] = maxPower;
 
     lobbies[lobbyId] = lobby;
 
@@ -98,13 +118,25 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     lobbyHeroesCount[lobbyId][msg.sender] = heroIds.length;
   }
 
-  function joinLobby(uint256 lobbyId, uint256[] calldata heroIds) public {
+  function joinLobby(
+    uint256 lobbyId,
+    uint256 minPower,
+    uint256 maxPower,
+    uint256[] calldata heroIds
+  ) public {
     validateHeroIds(heroIds, msg.sender);
 
     require(lobbies[lobbyId].id == lobbyId, "LobbyBattle: lobby doesn't exist");
     require(
       lobbies[lobbyId].capacity == heroIds.length,
       "LobbyBattle: wrong heroes"
+    );
+    uint256 teamPower = getHeroesPower(heroIds);
+    require(
+      minPower <= teamPower &&
+        maxPower >= teamPower &&
+        maxPower - minPower == heroPowerRange,
+      "LobbyBattle: wrong power range"
     );
     require(lobbies[lobbyId].finishedAt == 0, "LobbyBattle: already finished");
     require(
@@ -118,6 +150,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
     lobbies[lobbyId].client = msg.sender;
     lobbies[lobbyId].finishedAt = block.timestamp;
+    powers[lobbyId][msg.sender][0] = minPower;
+    powers[lobbyId][msg.sender][1] = maxPower;
 
     uint256[] memory hostHeroes = new uint256[](heroIds.length);
 
@@ -149,6 +183,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
         : lobbies[lobbyId].client,
       lobbies[lobbyId].rewards
     );
+
+    emit BattleFinished(lobbyId, lobbies[lobbyId].host, msg.sender);
   }
 
   function validateHeroIds(uint256[] calldata heroIds, address owner)
@@ -330,6 +366,27 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     );
   }
 
+  function getLobbyPowerRange(uint256 lobbyId)
+    public
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    address host = lobbies[lobbyId].host;
+    address client = lobbies[lobbyId].client;
+
+    return (
+      powers[lobbyId][host][0],
+      powers[lobbyId][host][1],
+      powers[lobbyId][client][0],
+      powers[lobbyId][client][1]
+    );
+  }
+
   function getLobbyPower(uint256 lobbyId)
     public
     view
@@ -360,6 +417,18 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     }
 
     return (host, hostPower, client, clientPower);
+  }
+
+  function getHeroesPower(uint256[] memory heroes)
+    public
+    view
+    returns (uint256)
+  {
+    uint256 power;
+    for (uint256 i = 0; i < heroes.length; i++) {
+      power += heroManager.heroPower(heroes[i]);
+    }
+    return power;
   }
 
   function getActiveLobbies(address myAddr)
@@ -478,6 +547,14 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   function withdrawDustETH(address payable recipient) external onlyOwner {
     recipient.transfer(address(this).balance);
+  }
+
+  function setBenefitMultiplier(uint256 multiplier) external onlyOwner {
+    benefitMultiplier = multiplier;
+  }
+
+  function setHeroPowerRange(uint256 range) external onlyOwner {
+    heroPowerRange = range;
   }
 
   receive() external payable {}
