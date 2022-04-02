@@ -27,8 +27,6 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   uint256 public saleMintPrice = 0.004 ether;
 
   /// @notice Mint start timestamp.
-  uint256 public mintStartTimestamp;
-  /// @notice Mint start timestamp.
   uint256 public mintEndTimestamp;
 
   /// @notice sale enabled.
@@ -123,8 +121,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   /// @return `true` if the mint event is open, otherwise `false`.
   function isMintOpen() public view returns (bool) {
     return
-      mintStartTimestamp > 0 &&
-      block.timestamp >= mintStartTimestamp &&
+      mintEndTimestamp > 0 &&
       block.timestamp <= mintEndTimestamp &&
       publicPointer <= HIGHEST_PUBLIC;
   }
@@ -156,19 +153,10 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   }
 
   /// @notice Allows the owner to set the mint timestamps
-  /// @param _mintStartTimestamp The start of the nft mint event (needs to be greater than `block.timestamp`).
-  /// @param _mintEndTimestamp The end of the nft mint event (needs to be greater than `mintStartTimestamp`).
-  function setTimestamps(uint256 _mintStartTimestamp, uint256 _mintEndTimestamp)
-    external
-    onlyOwner
-  {
-    require(
-      _mintEndTimestamp > _mintStartTimestamp &&
-        _mintStartTimestamp > block.timestamp,
-      "INVALID_TIMESTAMPS"
-    );
+  /// @param _mintEndTimestamp The end of the nft mint event (needs to be greater than block.timestamp).
+  function setTimestamps(uint256 _mintEndTimestamp) external onlyOwner {
+    require(_mintEndTimestamp > block.timestamp, "INVALID_TIMESTAMPS");
 
-    mintStartTimestamp = _mintStartTimestamp;
     mintEndTimestamp = _mintEndTimestamp;
   }
 
