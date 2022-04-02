@@ -41,7 +41,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   uint256 private benefitMultiplier = 250;
 
-  uint256 public heroPowerRange = 150;
+  uint256 public heroPowerRange = 150 * 10**18;
 
   uint256 public bonusExp = 30; // From Level 1, every battle win will give 30 exp to the hero. And as level goes up, this will be reduced. Level 1 -> 2: 30, Lv 2 -> 3: 29, ...., Lv 29 -> 30: 2
 
