@@ -6,7 +6,7 @@
 const hre = require("hardhat");
 const { sleep } = require("./utils/sleep");
 
-const HERO_MANAGER_ADDRESS = "0x51624b86523c95175d4b3d145F2Ed9f884C683E2";
+const HERO_MANAGER_ADDRESS = "0xE056071F0A920c838EE3f546bCE630Cf35fb2Db4";
 
 async function main() {
   // We get the contract to deploy

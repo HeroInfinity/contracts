@@ -11,7 +11,7 @@ import "../libraries/GameFi.sol";
 /** Contract handles every single Hero data */
 contract HeroManager is Ownable, Multicall, Randomness {
   IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-  IERC721 public nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
+  IERC721 public nft = IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
 
   address public lobbyBattleAddress;
 
