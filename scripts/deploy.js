@@ -7,35 +7,13 @@ const hre = require("hardhat");
 const { MINDELAY } = require("./constants");
 
 async function main() {
-  const [admin] = await hre.ethers.getSigners();
-  console.log(admin.address);
-
-  // We get the contract to deploy
-  // const HeroInfinityToken = await hre.ethers.getContractFactory(
-  //   "HeroInfinityToken"
-  // );
-  // const token = await HeroInfinityToken.deploy();
-
-  // await token.deployed();
-
-  // const TokenGovernor = await hre.ethers.getContractFactory("TokenGovernor");
-  // const governor = await TokenGovernor.deploy(
-  //   MINDELAY,
-  //   [proposer.address],
-  //   [executor.address]
-  // );
-
-  // await governor.deployed();
-
-  const HeroInfinityNodePool = await hre.ethers.getContractFactory(
-    "HeroInfinityNodePool"
+  const HeroInfinityNFT = await hre.ethers.getContractFactory(
+    "HeroInfinityNFT"
   );
-  const nodePool = await HeroInfinityNodePool.deploy();
+  const nft = await HeroInfinityNFT.deploy();
+  await nft.deployed();
 
-  await nodePool.deployed();
-
-  // console.log("Token deployed to: " + token.address);
-  console.log("NodePool deployed to: " + nodePool.address);
+  console.log("NFT deployed to: " + nft.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
