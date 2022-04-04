@@ -12,18 +12,15 @@ async function main() {
     "HeroInfinityNFT"
   );
 
-  const nodepool = "0xFAd5Ef0F347eb7bB89E798B5d026F60aFA3E2bF4";
-
-  const nft = await HeroInfinityNFT.deploy(nodepool);
+  const nft = await HeroInfinityNFT.deploy();
 
   await nft.deployed();
 
-  await sleep(30000);
+  await sleep(60000);
 
   try {
     await hre.run("verify:verify", {
       address: nft.address,
-      constructorArguments: [nodepool],
     });
   } catch (err) {
     console.log(err);
