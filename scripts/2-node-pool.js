@@ -11,7 +11,6 @@ async function main() {
     "HeroInfinityNodePool"
   );
   const nodePool = await HeroInfinityNodePool.deploy();
-
   await nodePool.deployed();
 
   await sleep(60000);
