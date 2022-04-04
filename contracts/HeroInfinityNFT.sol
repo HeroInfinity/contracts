@@ -46,7 +46,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
     /// @notice Number of NFTs minted by each address.
     mapping(address => uint256) public mintedAmount;
 
-    constructor(address _pool) ERC721("Hero Infinity Heros", "HRIH") {}
+    constructor() ERC721("Hero Infinity Heros", "HRIH") {}
 
     /// @notice Allows the public to mint a maximum of 5 NFTs per address.
     /// NFTs minted using this function range from #29 to #1078.
