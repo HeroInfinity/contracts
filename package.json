@@ -9,6 +9,7 @@
     "deploy:3": "hardhat run scripts/3-nft.js",
     "deploy:4": "hardhat run scripts/4-hero-manager.js",
     "deploy:5": "hardhat run scripts/5-lobby-battle.js",
+    "deploy:game": "hardhat run scripts/deploy-game.js",
     "init:heroes": "hardhat run scripts/init-heroes.js",
     "test": "hardhat run scripts/test.js",
     "artifacts": "find artifacts/contracts -regex '.*[^(dbg)].json' -exec cp \"{}\" ../sdk/artifacts/ \\;"
@@ -52,5 +53,8 @@
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.17",
     "web3": "^1.6.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
 }

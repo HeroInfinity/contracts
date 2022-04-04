@@ -31,11 +31,12 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   Counters.Counter private lobbyIterator;
 
-  IHeroManager public heroManager =
-    IHeroManager(0x51624b86523c95175d4b3d145F2Ed9f884C683E2);
+  IHeroManager public heroManager;
 
-  IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-  IERC721 public nft = IERC721(0xef5A8AF5148a53a4ef4749595fe44E3E08754b8B);
+  IERC20 public constant HRI_TOKEN =
+    IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC721 public constant NFT =
+    IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
 
   address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
 
@@ -75,7 +76,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
     require(lobbyFees[capacity] > 0, "LobbyBattle: wrong lobby capacity");
     require(
-      token.transferFrom(msg.sender, rewardsPayeer, lobbyFees[capacity]),
+      HRI_TOKEN.transferFrom(msg.sender, rewardsPayeer, lobbyFees[capacity]),
       "LobbyBattle: not enough fee"
     );
 
@@ -124,7 +125,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
     uint256 fee = lobbyFees[lobbies[lobbyId].capacity];
     require(
-      token.transferFrom(msg.sender, rewardsPayeer, fee),
+      HRI_TOKEN.transferFrom(msg.sender, rewardsPayeer, fee),
       "LobbyBattle: not enough fee"
     );
 
@@ -165,7 +166,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       }
     }
 
-    token.transferFrom(
+    HRI_TOKEN.transferFrom(
       rewardsPayeer,
       lobbies[lobbyId].winner == 1
         ? lobbies[lobbyId].host
@@ -182,7 +183,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     returns (bool)
   {
     for (uint256 i = 0; i < heroIds.length; i++) {
-      require(nft.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
+      require(NFT.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
     }
     return true;
   }

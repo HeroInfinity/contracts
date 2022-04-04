@@ -10,8 +10,10 @@ import "../libraries/GameFi.sol";
 
 /** Contract handles every single Hero data */
 contract HeroManager is Ownable, Multicall, Randomness {
-  IERC20 public token = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-  IERC721 public nft = IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
+  IERC20 public constant TOKEN =
+    IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC721 public constant NFT =
+    IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
 
   address public lobbyBattleAddress;
 
@@ -43,7 +45,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
   }
 
   function levelUp(uint256 heroId, uint256 levels) public {
-    require(nft.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
+    require(NFT.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
     require(
       heroes[heroId].level < HERO_MAX_LEVEL,
       "HeroManager: hero max level"
@@ -62,7 +64,7 @@ contract HeroManager is Ownable, Multicall, Randomness {
       ((((levels - 1) * levels) / 2) * bonusLevelUpFee);
 
     require(
-      token.transferFrom(msg.sender, address(this), totalLevelUpFee),
+      TOKEN.transferFrom(msg.sender, address(this), totalLevelUpFee),
       "HeroManager: not enough fee"
     );
 
@@ -184,14 +186,6 @@ contract HeroManager is Ownable, Multicall, Randomness {
 
   function setBonusLevelUpFee(uint256 value) external onlyOwner {
     bonusLevelUpFee = value;
-  }
-
-  function setToken(address tokenAddress) external onlyOwner {
-    token = IERC20(tokenAddress);
-  }
-
-  function setNFT(address nftAddress) external onlyOwner {
-    nft = IERC721(nftAddress);
   }
 
   function setBonusExp(uint256 value) external onlyOwner {
