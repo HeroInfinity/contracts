@@ -53,7 +53,10 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
     /// @param amount Number of NFTs to mint (max 5).
     function mint(uint256 amount) external payable {
         require(isMintOpen(), "MINT_NOT_OPEN");
-        _mintInternal(msg.sender, amount);
+
+        address account = msg.sender;
+        uint256 price = mintPrice(account);
+        _mintInternal(account, amount, price);
     }
 
     function sale(uint256 amount) external payable {
@@ -88,14 +91,18 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
     /// Performs common checks and mints `amount` of NFTs.
     /// @param account The account to mint the NFTs to.
     /// @param amount The amount of NFTs to mint.
-    function _mintInternal(address account, uint256 amount) internal {
+    function _mintInternal(
+        address account,
+        uint256 amount,
+        uint256 price
+    ) internal {
         require(amount != 0, "INVALID_AMOUNT");
         uint256 mintedWallet = mintedAmount[account] + amount;
         require(mintedWallet <= MAX_PER_WALLET, "WALLET_LIMIT_EXCEEDED");
         uint256 currentPointer = publicPointer;
         uint256 newPointer = currentPointer + amount;
         require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
-        require(amount * mintPrice(account) <= msg.value, "WRONG_ETH_VALUE");
+        require(amount * price <= msg.value, "WRONG_ETH_VALUE");
 
         publicPointer = newPointer;
         mintedAmount[account] = mintedWallet;
