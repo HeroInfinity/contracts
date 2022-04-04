@@ -20,11 +20,11 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   uint256 public constant HIGHEST_PUBLIC = 1078;
 
   /// @notice Price of each NFT for whitelisted users.
-  uint256 public whitelistMintPrice = 0.0025 ether;
+  uint256 public whitelistMintPrice = 0.25 ether;
   /// @notice Price of each NFT for users in mint event.
-  uint256 public publicMintPrice = 0.0035 ether;
+  uint256 public publicMintPrice = 0.35 ether;
   /// @notice Price of each NFT for users after mint event.
-  uint256 public saleMintPrice = 0.004 ether;
+  uint256 public saleMintPrice = 0.4 ether;
 
   /// @notice Mint start timestamp.
   uint256 public mintEndTimestamp;
