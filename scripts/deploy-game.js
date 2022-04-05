@@ -147,6 +147,7 @@ async function main() {
       await hre.run("verify:verify", {
         address: heroManager.address,
         contract: "contracts/game/HeroManager.sol:HeroManager",
+        constructorArguments: [TOKEN_ADDRESS, NFT_ADDRESS],
       });
       heroManagerVerified = true;
     } catch (err) {}
