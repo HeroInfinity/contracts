@@ -13,4 +13,6 @@ interface IHeroManager {
   function heroEnergy(uint256 heroId) external view returns (uint256);
 
   function spendHeroEnergy(uint256 heroId) external;
+
+  function expUp(uint256 heroId, bool won) external;
 }

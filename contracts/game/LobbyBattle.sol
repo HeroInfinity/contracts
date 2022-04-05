@@ -4,9 +4,12 @@ pragma solidity 0.8.9;
 import "./HeroManager.sol";
 import "./Randomness.sol";
 import "../interfaces/IHeroManager.sol";
+import "../libraries/UnsafeMath.sol";
 
 /** Logic for lobby battle */
 contract LobbyBattle is Ownable, Multicall, Randomness {
+  using UnsafeMath for uint256;
+
   struct Lobby {
     bytes32 name;
     bytes32 avatar;
@@ -69,43 +72,47 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256[] calldata heroIds
   ) public {
     address host = msg.sender;
+    uint256 fee = lobbyFees[capacity];
     validateHeroIds(heroIds, host);
     validateHeroEnergies(heroIds);
 
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
-    require(lobbyFees[capacity] > 0, "LobbyBattle: wrong lobby capacity");
+    require(fee > 0, "LobbyBattle: wrong lobby capacity");
     require(
-      HRI_TOKEN.transferFrom(host, rewardsPayeer, lobbyFees[capacity]),
+      HRI_TOKEN.transferFrom(host, rewardsPayeer, fee),
       "LobbyBattle: not enough fee"
     );
 
     if (!registeredPlayers[host]) {
-      uniquePlayers[totalPlayers] = host;
+      uint256 tp = totalPlayers;
+      uniquePlayers[tp] = host;
       registeredPlayers[host] = true;
-      totalPlayers += 1;
+      tp = tp.add(1);
+      totalPlayers = tp;
     }
-    playersFees[host] += lobbyFees[capacity];
+    playersFees[host] = playersFees[host].add(fee);
 
-    lobbyIterator += 1;
+    uint256 lobbyId = lobbyIterator.add(1);
+    lobbyIterator = lobbyId;
 
     Lobby memory lobby = Lobby(
       name,
       avatar,
       host,
       address(0),
-      lobbyIterator,
+      lobbyId,
       capacity,
       block.timestamp,
       0,
       0,
-      lobbyFees[capacity],
+      fee,
       0
     );
 
-    lobbies[lobbyIterator] = lobby;
+    lobbies[lobbyId] = lobby;
 
-    for (uint256 i = 0; i < heroIds.length; i++) {
-      lobbyHeroes[lobbyIterator][host][i] = heroIds[i];
+    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
+      lobbyHeroes[lobbyId][host][i] = heroIds[i];
       heroManager.spendHeroEnergy(heroIds[i]);
     }
   }
@@ -113,65 +120,61 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   function joinLobby(uint256 lobbyId, uint256[] calldata heroIds) external {
     address client = msg.sender;
     address host = lobbies[lobbyId].host;
+    address rewardsPool = rewardsPayeer;
+    uint256 capacity = lobbies[lobbyId].capacity;
+
     validateHeroIds(heroIds, client);
     validateHeroEnergies(heroIds);
 
     require(lobbies[lobbyId].id == lobbyId, "LobbyBattle: lobby doesn't exist");
-    require(
-      lobbies[lobbyId].capacity == heroIds.length,
-      "LobbyBattle: wrong heroes"
-    );
+    require(capacity == heroIds.length, "LobbyBattle: wrong heroes");
     require(lobbies[lobbyId].finishedAt == 0, "LobbyBattle: already finished");
 
-    uint256 fee = lobbyFees[lobbies[lobbyId].capacity];
+    uint256 fee = lobbyFees[capacity];
     require(
-      HRI_TOKEN.transferFrom(client, rewardsPayeer, fee),
+      HRI_TOKEN.transferFrom(client, rewardsPool, fee),
       "LobbyBattle: not enough fee"
     );
 
     if (!registeredPlayers[client]) {
-      uniquePlayers[totalPlayers] = client;
+      uint256 tp = totalPlayers;
+      uniquePlayers[tp] = client;
       registeredPlayers[client] = true;
-      totalPlayers += 1;
+      tp = tp.add(1);
+      totalPlayers = tp;
     }
-    playersFees[client] += fee;
+    playersFees[client] = playersFees[client].add(fee);
 
     lobbies[lobbyId].client = client;
     lobbies[lobbyId].finishedAt = block.timestamp;
 
     uint256[] memory hostHeroes = getPlayerHeroesOnLobby(lobbyId, host);
 
-    for (uint256 i = 0; i < heroIds.length; i++) {
-      lobbyHeroes[lobbyId][client][i] = heroIds[i];
-      heroManager.spendHeroEnergy(heroIds[i]);
-    }
+    uint256 reward = fee.mul(benefitMultiplier).div(100);
+    lobbies[lobbyId].rewards = reward;
 
-    lobbies[lobbyId].rewards =
-      (lobbyFees[lobbies[lobbyId].capacity] * benefitMultiplier) /
-      100;
+    if (capacity == 1) {
+      uint256 winner = contest1vs1(hostHeroes, heroIds);
+      lobbies[lobbyId].winner = winner;
+      if (winner == 1) {
+        heroManager.expUp(hostHeroes[0], true);
+        heroManager.expUp(heroIds[0], false);
 
-    if (lobbies[lobbyId].capacity == 1) {
-      lobbies[lobbyId].winner = contest1vs1(hostHeroes, heroIds);
-      if (lobbies[lobbyId].winner == 1) {
-        heroManager.bulkExpUp(hostHeroes, true);
-        heroManager.bulkExpUp(heroIds, false);
-
-        playersRewards[host] += lobbies[lobbyId].rewards;
+        playersRewards[host] = playersRewards[host].add(reward);
       } else {
-        heroManager.bulkExpUp(hostHeroes, false);
-        heroManager.bulkExpUp(heroIds, true);
+        heroManager.expUp(hostHeroes[0], false);
+        heroManager.expUp(heroIds[0], true);
 
-        playersRewards[client] += lobbies[lobbyId].rewards;
+        playersRewards[client] = playersRewards[client].add(reward);
       }
+
+      lobbyHeroes[lobbyId][client][0] = heroIds[0];
+      heroManager.spendHeroEnergy(heroIds[0]);
+
+      HRI_TOKEN.transferFrom(rewardsPool, winner == 1 ? host : client, reward);
+
+      emit BattleFinished(lobbyId, host, client);
     }
-
-    HRI_TOKEN.transferFrom(
-      rewardsPayeer,
-      lobbies[lobbyId].winner == 1 ? host : client,
-      lobbies[lobbyId].rewards
-    );
-
-    emit BattleFinished(lobbyId, host, client);
   }
 
   function validateHeroIds(uint256[] calldata heroIds, address owner)
@@ -179,7 +182,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     view
     returns (bool)
   {
-    for (uint256 i = 0; i < heroIds.length; i++) {
+    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
       require(NFT.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
     }
     return true;
@@ -190,7 +193,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     view
     returns (bool)
   {
-    for (uint256 i = 0; i < heroIds.length; i++) {
+    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
       require(
         heroManager.heroEnergy(heroIds[i]) > 0,
         "LobbyBattle: not enough energy"
@@ -344,7 +347,7 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     }
     uint256[] memory heroes = new uint256[](count);
 
-    for (uint256 i = 0; i < count; i++) {
+    for (uint256 i = 0; i < count; i = i.add(1)) {
       heroes[i] = lobbyHeroes[lobbyId][player][i];
     }
     return heroes;
@@ -389,13 +392,13 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
     uint256 hostPower;
     uint256 clientPower;
-    for (uint256 i = 0; i < hostHeroes.length; i++) {
+    for (uint256 i = 0; i < hostHeroes.length; i = i.add(1)) {
       uint256 hostHeroPower = heroManager.heroPower(hostHeroes[i]);
-      hostPower += hostHeroPower;
+      hostPower = hostPower.add(hostHeroPower);
 
       if (client != address(0)) {
         uint256 clientHeroPower = heroManager.heroPower(clientHeroes[i]);
-        clientPower += clientHeroPower;
+        clientPower = clientPower.add(clientHeroPower);
       }
     }
 
@@ -408,8 +411,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     returns (uint256)
   {
     uint256 power;
-    for (uint256 i = 0; i < heroes.length; i++) {
-      power += heroManager.heroPower(heroes[i]);
+    for (uint256 i = 0; i < heroes.length; i = i.add(1)) {
+      power = power.add(heroManager.heroPower(heroes[i]));
     }
     return power;
   }
