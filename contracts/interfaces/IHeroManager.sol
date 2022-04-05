@@ -15,4 +15,18 @@ interface IHeroManager {
   function spendHeroEnergy(uint256 heroId) external;
 
   function expUp(uint256 heroId, bool won) external;
+
+  function token() external view returns (address);
+
+  function nft() external view returns (address);
+
+  function validateHeroIds(uint256[] calldata heroIds, address owner)
+    external
+    view
+    returns (bool);
+
+  function validateHeroEnergies(uint256[] calldata heroIds)
+    external
+    view
+    returns (bool);
 }

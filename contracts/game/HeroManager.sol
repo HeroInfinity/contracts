@@ -12,10 +12,8 @@ import "../libraries/UnsafeMath.sol";
 contract HeroManager is Ownable, Multicall {
   using UnsafeMath for uint256;
 
-  IERC20 public constant TOKEN =
-    IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-  IERC721 public constant NFT =
-    IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
+  IERC20 public token;
+  IERC721 public nft;
 
   address public lobbyBattleAddress;
 
@@ -42,7 +40,10 @@ contract HeroManager is Ownable, Multicall {
   mapping(uint256 => uint256) public heroesEnergy;
   mapping(uint256 => uint256) public heroesEnergyUsedAt;
 
-  constructor() {}
+  constructor(address tokenAddress, address nftAddress) {
+    token = IERC20(tokenAddress);
+    nft = IERC721(nftAddress);
+  }
 
   function addHero(uint256 heroId, GameFi.Hero calldata hero)
     external
@@ -54,7 +55,7 @@ contract HeroManager is Ownable, Multicall {
 
   function levelUp(uint256 heroId, uint256 levels) external {
     uint256 currentLevel = heroes[heroId].level;
-    require(NFT.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
+    require(nft.ownerOf(heroId) == msg.sender, "HeroManager: not a NFT owner");
     require(currentLevel < HERO_MAX_LEVEL, "HeroManager: hero max level");
     require(
       currentLevel + levels <= HERO_MAX_LEVEL,
@@ -73,7 +74,7 @@ contract HeroManager is Ownable, Multicall {
     );
 
     require(
-      TOKEN.transferFrom(msg.sender, address(this), totalLevelUpFee),
+      token.transferFrom(msg.sender, address(this), totalLevelUpFee),
       "HeroManager: not enough fee"
     );
 
@@ -217,6 +218,28 @@ contract HeroManager is Ownable, Multicall {
     uint256 level = heroLevel(heroId);
     level = level.sub(1).mul(10**18);
     return bonusExp.sub(level);
+  }
+
+  function validateHeroIds(uint256[] calldata heroIds, address owner)
+    external
+    view
+    returns (bool)
+  {
+    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
+      require(nft.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
+    }
+    return true;
+  }
+
+  function validateHeroEnergies(uint256[] calldata heroIds)
+    external
+    view
+    returns (bool)
+  {
+    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
+      require(heroEnergy(heroIds[i]) > 0, "LobbyBattle: not enough energy");
+    }
+    return true;
   }
 
   function setLobbyBattle(address lbAddr) external onlyOwner {

@@ -15,6 +15,8 @@ const { formatBytes32String } = require("ethers/lib/utils");
 const { sleep } = require("./utils/sleep");
 
 const NFT_NUMBER = 100;
+const TOKEN_ADDRESS = "0x28ee3E2826264b9c55FcdD122DFa93680916c9b8";
+const NFT_ADDRESS = "0x76b713ff56b9CAD82b2820202537A98182b5A0EC";
 
 const ADDRESSES_PATH = path.resolve(
   __dirname,
@@ -51,7 +53,7 @@ const attackCapabilityMap = {
 
 async function main() {
   const HeroManager = await hre.ethers.getContractFactory("HeroManager");
-  const heroManager = await HeroManager.deploy();
+  const heroManager = await HeroManager.deploy(TOKEN_ADDRESS, NFT_ADDRESS);
 
   await heroManager.deployed();
 

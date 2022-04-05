@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.9;
 
+import "hardhat/console.sol";
 import "./HeroManager.sol";
 import "./Randomness.sol";
 import "../interfaces/IHeroManager.sol";
@@ -32,11 +33,6 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   uint256 private lobbyIterator;
 
   IHeroManager public heroManager;
-
-  IERC20 public constant HRI_TOKEN =
-    IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
-  IERC721 public constant NFT =
-    IERC721(0x76b713ff56b9CAD82b2820202537A98182b5A0EC);
 
   address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
 
@@ -73,13 +69,14 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   ) public {
     address host = msg.sender;
     uint256 fee = lobbyFees[capacity];
-    validateHeroIds(heroIds, host);
-    validateHeroEnergies(heroIds);
+    heroManager.validateHeroIds(heroIds, host);
+    heroManager.validateHeroEnergies(heroIds);
+    IERC20 token = IERC20(heroManager.token());
 
     require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
     require(fee > 0, "LobbyBattle: wrong lobby capacity");
     require(
-      HRI_TOKEN.transferFrom(host, rewardsPayeer, fee),
+      token.transferFrom(host, rewardsPayeer, fee),
       "LobbyBattle: not enough fee"
     );
 
@@ -123,16 +120,17 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     address rewardsPool = rewardsPayeer;
     uint256 capacity = lobbies[lobbyId].capacity;
 
-    validateHeroIds(heroIds, client);
-    validateHeroEnergies(heroIds);
+    heroManager.validateHeroIds(heroIds, client);
+    heroManager.validateHeroEnergies(heroIds);
 
     require(lobbies[lobbyId].id == lobbyId, "LobbyBattle: lobby doesn't exist");
     require(capacity == heroIds.length, "LobbyBattle: wrong heroes");
     require(lobbies[lobbyId].finishedAt == 0, "LobbyBattle: already finished");
 
+    IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      HRI_TOKEN.transferFrom(client, rewardsPool, fee),
+      token.transferFrom(client, rewardsPool, fee),
       "LobbyBattle: not enough fee"
     );
 
@@ -171,35 +169,10 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
       lobbyHeroes[lobbyId][client][0] = heroIds[0];
       heroManager.spendHeroEnergy(heroIds[0]);
 
-      HRI_TOKEN.transferFrom(rewardsPool, winner == 1 ? host : client, reward);
+      token.transferFrom(rewardsPool, winner == 1 ? host : client, reward);
 
       emit BattleFinished(lobbyId, host, client);
     }
-  }
-
-  function validateHeroIds(uint256[] calldata heroIds, address owner)
-    internal
-    view
-    returns (bool)
-  {
-    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
-      require(NFT.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
-    }
-    return true;
-  }
-
-  function validateHeroEnergies(uint256[] calldata heroIds)
-    internal
-    view
-    returns (bool)
-  {
-    for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
-      require(
-        heroManager.heroEnergy(heroIds[i]) > 0,
-        "LobbyBattle: not enough energy"
-      );
-    }
-    return true;
   }
 
   function contest1vs1(
