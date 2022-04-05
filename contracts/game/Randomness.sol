@@ -16,6 +16,8 @@ contract Randomness {
           block.difficulty,
           block.timestamp,
           msg.sender,
+          msg.sig,
+          gasleft(),
           min,
           max
         )

@@ -9,6 +9,7 @@
     "deploy:3": "hardhat run scripts/3-nft.js",
     "deploy:4": "hardhat run scripts/4-hero-manager.js",
     "deploy:5": "hardhat run scripts/5-lobby-battle.js",
+    "dice": "hardhat run scripts/dice.js",
     "deploy:game": "hardhat run scripts/deploy-game.js",
     "init:heroes": "hardhat run scripts/init-heroes.js",
     "test": "hardhat run scripts/test.js",
