@@ -17,57 +17,57 @@ async function main() {
   const heroManager = await HeroManager.deploy(TOKEN_ADDRESS, NFT_ADDRESS);
   await heroManager.deployed();
 
-  // const LobbyManager = await hre.ethers.getContractFactory("LobbyManager");
-  // const lobbyManager = await LobbyManager.deploy();
-  // await lobbyManager.deployed();
+  const LobbyManager = await hre.ethers.getContractFactory("LobbyManager");
+  const lobbyManager = await LobbyManager.deploy();
+  await lobbyManager.deployed();
 
-  // const Battle1vs1 = await hre.ethers.getContractFactory("Battle1vs1");
-  // const battle1vs1 = await Battle1vs1.deploy(
-  //   heroManager.address,
-  //   lobbyManager.address
-  // );
-  // await battle1vs1.deployed();
+  const Battle1vs1 = await hre.ethers.getContractFactory("Battle1vs1");
+  const battle1vs1 = await Battle1vs1.deploy(
+    heroManager.address,
+    lobbyManager.address
+  );
+  await battle1vs1.deployed();
 
-  // await heroManager.setLobbyManager(lobbyManager.address);
-  // await lobbyManager.setHeroManager(heroManager.address);
-  // await lobbyManager.setHeroManager(heroManager.address);
-  // await lobbyManager.setBattleAddress(1, battle1vs1.address);
+  await heroManager.setLobbyManager(lobbyManager.address);
+  await lobbyManager.setHeroManager(heroManager.address);
+  await lobbyManager.setHeroManager(heroManager.address);
+  await lobbyManager.setBattleAddress(1, battle1vs1.address);
 
-  // console.log("Contracts deployed!");
+  console.log("Contracts deployed!");
 
-  // await addHeroesMetadata(heroManager);
-  // await updateSDK([
-  //   ["heroManager", heroManager.address],
-  //   ["lobbyManager", lobbyManager.address],
-  // ]);
+  await addHeroesMetadata(heroManager);
+  await updateSDK([
+    ["heroManager", heroManager.address],
+    ["lobbyManager", lobbyManager.address],
+  ]);
 
-  // console.log("HeroManager deployed to: " + heroManager.address);
-  // console.log("LobbyManager deployed to: " + lobbyManager.address);
+  console.log("HeroManager deployed to: " + heroManager.address);
+  console.log("LobbyManager deployed to: " + lobbyManager.address);
 
-  // await sleep(100000);
+  await sleep(100000);
 
-  // let heroManagerVerified = false;
-  // do {
-  //   try {
-  //     await hre.run("verify:verify", {
-  //       address: heroManager.address,
-  //       contract: "contracts/game/HeroManager.sol:HeroManager",
-  //       constructorArguments: [TOKEN_ADDRESS, NFT_ADDRESS],
-  //     });
-  //     heroManagerVerified = true;
-  //   } catch (err) {}
-  // } while (!heroManagerVerified);
+  let heroManagerVerified = false;
+  do {
+    try {
+      await hre.run("verify:verify", {
+        address: heroManager.address,
+        contract: "contracts/game/HeroManager.sol:HeroManager",
+        constructorArguments: [TOKEN_ADDRESS, NFT_ADDRESS],
+      });
+      heroManagerVerified = true;
+    } catch (err) {}
+  } while (!heroManagerVerified);
 
-  // let lobbyManagerVerified = false;
-  // do {
-  //   try {
-  //     await hre.run("verify:verify", {
-  //       address: lobbyManager.address,
-  //       contract: "contracts/game/LobbyManager.sol:LobbyManager",
-  //     });
-  //     lobbyManagerVerified = true;
-  //   } catch (err) {}
-  // } while (!lobbyManagerVerified);
+  let lobbyManagerVerified = false;
+  do {
+    try {
+      await hre.run("verify:verify", {
+        address: lobbyManager.address,
+        contract: "contracts/game/LobbyManager.sol:LobbyManager",
+      });
+      lobbyManagerVerified = true;
+    } catch (err) {}
+  } while (!lobbyManagerVerified);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
