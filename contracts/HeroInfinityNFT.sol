@@ -10,21 +10,21 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   using Strings for uint256;
 
   /// @notice Hero Infinity Node Pool Address
-  address public nodePool;
+  address public nodePool = 0xFAd5Ef0F347eb7bB89E798B5d026F60aFA3E2bF4;
 
   /// @notice Max number of NFTs that can be minted per wallet.
-  uint256 public constant MAX_PER_WALLET = 5;
+  uint256 public maxPerWallet = 5;
   /// @notice Index of the last NFT reserved for team members (0 - 28).
   uint256 public constant HIGHEST_TEAM = 28;
   /// @notice Index of the last NFT for sale (29 - 1078).
   uint256 public constant HIGHEST_PUBLIC = 1078;
 
   /// @notice Price of each NFT for whitelisted users.
-  uint256 public whitelistMintPrice = 0.25 ether;
+  uint256 public whitelistMintPrice = 0.09 ether;
   /// @notice Price of each NFT for users in mint event.
-  uint256 public publicMintPrice = 0.35 ether;
+  uint256 public publicMintPrice = 0.12 ether;
   /// @notice Price of each NFT for users after mint event.
-  uint256 public saleMintPrice = 0.4 ether;
+  uint256 public saleMintPrice = 0.2 ether;
 
   /// @notice Mint start timestamp.
   uint256 public mintEndTimestamp;
@@ -46,7 +46,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   /// @notice Number of NFTs minted by each address.
   mapping(address => uint256) public mintedAmount;
 
-  constructor() ERC721("Hero Infinity Heroes", "HRIH") {}
+  constructor() ERC721("Hero Infinity Cards", "HRIC") {}
 
   /// @notice Allows the public to mint a maximum of 5 NFTs per address.
   /// NFTs minted using this function range from #29 to #1078.
@@ -98,7 +98,7 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
   ) internal {
     require(amount != 0, "INVALID_AMOUNT");
     uint256 mintedWallet = mintedAmount[account] + amount;
-    require(mintedWallet <= MAX_PER_WALLET, "WALLET_LIMIT_EXCEEDED");
+    require(mintedWallet <= maxPerWallet, "WALLET_LIMIT_EXCEEDED");
     uint256 currentPointer = publicPointer;
     uint256 newPointer = currentPointer + amount;
     require(newPointer - 1 <= HIGHEST_PUBLIC, "SALE_LIMIT_EXCEEDED");
@@ -202,5 +202,9 @@ contract HeroInfinityNFT is ERC721Enumerable, Ownable, Multicall {
 
   function setNodePool(address poolAddress) external onlyOwner {
     nodePool = poolAddress;
+  }
+
+  function setMaxPerWallet(uint256 limit) external onlyOwner {
+    maxPerWallet = limit;
   }
 }
