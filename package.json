@@ -4,6 +4,15 @@
   "description": "Hero Infinity smart contracts",
   "scripts": {
     "compile": "hardhat compile --network rinkeby",
+    "deploy:1": "hardhat run scripts/1-token.js",
+    "deploy:2": "hardhat run scripts/2-node-pool.js",
+    "deploy:3": "hardhat run scripts/3-nft.js",
+    "deploy:4": "hardhat run scripts/4-hero-manager.js",
+    "deploy:5": "hardhat run scripts/5-lobby-battle.js",
+    "dice": "hardhat run scripts/dice.js",
+    "deploy:game": "hardhat run scripts/deploy-game.js",
+    "init:heroes": "hardhat run scripts/init-heroes.js",
+    "test": "hardhat run scripts/test.js",
     "artifacts": "find artifacts/contracts -regex '.*[^(dbg)].json' -exec cp \"{}\" ../sdk/artifacts/ \\;"
   },
   "repository": {
@@ -18,6 +27,7 @@
   },
   "homepage": "https://github.com/HeroInfinity/contracts#readme",
   "devDependencies": {
+    "@heroinfinity/sdk": "1.3.35",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -38,10 +48,14 @@
     "hardhat": "^2.6.8",
     "hardhat-gas-reporter": "^1.0.4",
     "mocha": "^9.1.3",
+    "node-fetch": "^2.6.7",
     "prettier": "^2.4.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.17",
     "web3": "^1.6.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
 }

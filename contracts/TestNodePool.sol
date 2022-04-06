@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HeroInfinityNodePool is Ownable {
+contract TestNodePool is Ownable {
   using SafeMath for uint256;
 
   struct NodeEntity {
@@ -29,9 +29,11 @@ contract HeroInfinityNodePool is Ownable {
 
   uint256 public totalNodesCreated = 0;
 
-  IERC20 public hriToken = IERC20(0x0C4BA8e27e337C5e8eaC912D836aA8ED09e80e78);
+  IERC20 public hriToken;
 
-  constructor() {}
+  constructor(address tokenAddress) {
+    hriToken = IERC20(tokenAddress);
+  }
 
   function createNode(string memory nodeName, uint256 count) external {
     require(count > 0, "Count should be not 0");

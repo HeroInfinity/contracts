@@ -4,16 +4,27 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const { MINDELAY } = require("./constants");
+const { sleep } = require("./utils/sleep");
 
 async function main() {
-  const HeroInfinityNFT = await hre.ethers.getContractFactory(
-    "HeroInfinityNFT"
-  );
-  const nft = await HeroInfinityNFT.deploy();
-  await nft.deployed();
+  // We get the contract to deploy
+  const HeroManager = await hre.ethers.getContractFactory("HeroManager");
+  const heroManager = await HeroManager.deploy();
 
-  console.log("NFT deployed to: " + nft.address);
+  await heroManager.deployed();
+
+  await sleep(60000);
+
+  try {
+    await hre.run("verify:verify", {
+      address: heroManager.address,
+      contract: "contracts/game/HeroManager.sol:HeroManager",
+    });
+  } catch (err) {
+    console.log(err);
+  }
+
+  console.log("HeroManager deployed to: " + heroManager.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -22,7 +33,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
-module.exports = {
-  MINDELAY,
-};

@@ -23,16 +23,16 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.9",
-  networks: {
-    local: {
-      url: "http://127.0.0.1:8545",
-      accounts: [
-        process.env.ACCOUNT1,
-        // process.env.ACCOUNT2,
-        // process.env.ACCOUNT3,
-      ],
+  solidity: {
+    version: "0.8.9",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
+  },
+  networks: {
     mainnet: {
       url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
       accounts: [
@@ -42,7 +42,7 @@ module.exports = {
       ],
     },
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161	",
+      url: "https://rinkeby.infura.io/v3/4826dd7278434ab8be5e4706905f0a15",
       accounts: [
         process.env.ACCOUNT1,
         // process.env.ACCOUNT2,
