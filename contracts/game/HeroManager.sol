@@ -15,7 +15,7 @@ contract HeroManager is Ownable, Multicall {
   IERC20 public token;
   IERC721 public nft;
 
-  address public lobbyBattleAddress;
+  address public lobbyManagerAddress;
 
   uint256 public constant HERO_MAX_LEVEL = 30;
   uint256 public constant HERO_MAX_EXP = 100 * 10**18;
@@ -86,7 +86,7 @@ contract HeroManager is Ownable, Multicall {
 
   function spendHeroEnergy(uint256 heroId) external {
     require(
-      msg.sender == lobbyBattleAddress,
+      msg.sender == lobbyManagerAddress,
       "HeroManager: callable by lobby battle only"
     );
     require(heroEnergy(heroId) > 0, "HeroManager: hero zero energy");
@@ -109,7 +109,7 @@ contract HeroManager is Ownable, Multicall {
   function expUp(uint256 heroId, bool won) public {
     address caller = msg.sender;
     require(
-      caller == lobbyBattleAddress || caller == address(this),
+      caller == lobbyManagerAddress || caller == address(this),
       "HeroManager: callable by lobby battle only"
     );
     uint256 exp = won
@@ -131,7 +131,7 @@ contract HeroManager is Ownable, Multicall {
 
   function bulkExpUp(uint256[] calldata heroIds, bool won) external {
     require(
-      msg.sender == lobbyBattleAddress,
+      msg.sender == lobbyManagerAddress,
       "HeroManager: callable by lobby battle only"
     );
 
@@ -226,7 +226,7 @@ contract HeroManager is Ownable, Multicall {
     returns (bool)
   {
     for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
-      require(nft.ownerOf(heroIds[i]) == owner, "LobbyBattle: not hero owner");
+      require(nft.ownerOf(heroIds[i]) == owner, "HeroManager: not hero owner");
     }
     return true;
   }
@@ -237,13 +237,13 @@ contract HeroManager is Ownable, Multicall {
     returns (bool)
   {
     for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
-      require(heroEnergy(heroIds[i]) > 0, "LobbyBattle: not enough energy");
+      require(heroEnergy(heroIds[i]) > 0, "HeroManager: not enough energy");
     }
     return true;
   }
 
-  function setLobbyBattle(address lbAddr) external onlyOwner {
-    lobbyBattleAddress = lbAddr;
+  function setLobbyManager(address lbAddr) external onlyOwner {
+    lobbyManagerAddress = lbAddr;
   }
 
   function setRarityPowerBooster(uint256 value) external onlyOwner {

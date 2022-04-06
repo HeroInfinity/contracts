@@ -34,12 +34,12 @@ const fetchAPI = (url) => {
   });
 };
 
-describe("Lobby Battle", function () {
+describe("Lobby Manager", function () {
   let token;
   let nft;
   let node;
   let heroManager;
-  let lobbyBattle;
+  let lobbyManager;
 
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
@@ -72,13 +72,22 @@ describe("Lobby Battle", function () {
     heroManager = await HeroManager.deploy(token.address, nft.address);
     await heroManager.deployed();
 
-    const LobbyBattle = await ethers.getContractFactory("LobbyBattle");
-    lobbyBattle = await LobbyBattle.deploy();
-    await lobbyBattle.deployed();
+    const LobbyManager = await ethers.getContractFactory("LobbyManager");
+    lobbyManager = await LobbyManager.deploy();
+    await lobbyManager.deployed();
 
-    await heroManager.setLobbyBattle(lobbyBattle.address);
-    await lobbyBattle.setHeroManager(heroManager.address);
-    await lobbyBattle.setRewardsPayeer(admin.address);
+    const Battle1vs1 = await ethers.getContractFactory("Battle1vs1");
+    const battle1vs1 = await Battle1vs1.deploy(
+      heroManager.address,
+      lobbyManager.address
+    );
+    await battle1vs1.deployed();
+
+    await heroManager.setLobbyManager(lobbyManager.address);
+    await lobbyManager.setHeroManager(heroManager.address);
+    await lobbyManager.setHeroManager(heroManager.address);
+    await lobbyManager.setBattleAddress(1, battle1vs1.address);
+    await lobbyManager.setRewardsPayeer(admin.address);
 
     const nftIds = Array(NFT_NUMBER)
       .fill(0)
@@ -116,85 +125,85 @@ describe("Lobby Battle", function () {
     }
   });
 
-  // it("create lobby costs fee", async function () {
-  //   const [admin] = await ethers.getSigners();
-  //   const beforeBalance = await token.balanceOf(admin.address);
+  it("create lobby costs fee", async function () {
+    const [admin] = await ethers.getSigners();
+    const beforeBalance = await token.balanceOf(admin.address);
 
-  //   const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
+    const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
 
-  //   await token.approve(lobbyBattle.address, constants.MaxUint256);
+    await token.approve(lobbyManager.address, constants.MaxUint256);
 
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb1"),
-  //     formatBytes32String("avatar1"),
-  //     1,
-  //     [nft1]
-  //   );
+    await lobbyManager.createLobby(
+      formatBytes32String("lb1"),
+      formatBytes32String("avatar1"),
+      1,
+      [nft1]
+    );
 
-  //   const fee = await lobbyBattle.lobbyFees(1);
-  //   const afterBalance = await token.balanceOf(admin.address);
+    const fee = await lobbyManager.lobbyFees(1);
+    const afterBalance = await token.balanceOf(admin.address);
 
-  //   expect(beforeBalance.sub(fee)).to.equal(afterBalance);
-  // });
+    expect(beforeBalance.sub(fee)).to.equal(afterBalance);
+  });
 
-  // it("create lobby reduce hero energy", async function () {
-  //   const [admin] = await ethers.getSigners();
-  //   const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
-  //   await token.approve(lobbyBattle.address, constants.MaxUint256);
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb1"),
-  //     formatBytes32String("avatar1"),
-  //     1,
-  //     [nft1]
-  //   );
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb2"),
-  //     formatBytes32String("avatar2"),
-  //     1,
-  //     [nft1]
-  //   );
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb3"),
-  //     formatBytes32String("avatar3"),
-  //     1,
-  //     [nft1]
-  //   );
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb4"),
-  //     formatBytes32String("avatar4"),
-  //     1,
-  //     [nft1]
-  //   );
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb5"),
-  //     formatBytes32String("avatar5"),
-  //     1,
-  //     [nft1]
-  //   );
+  it("create lobby reduce hero energy", async function () {
+    const [admin] = await ethers.getSigners();
+    const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
+    await token.approve(lobbyManager.address, constants.MaxUint256);
+    await lobbyManager.createLobby(
+      formatBytes32String("lb1"),
+      formatBytes32String("avatar1"),
+      1,
+      [nft1]
+    );
+    await lobbyManager.createLobby(
+      formatBytes32String("lb2"),
+      formatBytes32String("avatar2"),
+      1,
+      [nft1]
+    );
+    await lobbyManager.createLobby(
+      formatBytes32String("lb3"),
+      formatBytes32String("avatar3"),
+      1,
+      [nft1]
+    );
+    await lobbyManager.createLobby(
+      formatBytes32String("lb4"),
+      formatBytes32String("avatar4"),
+      1,
+      [nft1]
+    );
+    await lobbyManager.createLobby(
+      formatBytes32String("lb5"),
+      formatBytes32String("avatar5"),
+      1,
+      [nft1]
+    );
 
-  //   const energy = await heroManager.heroEnergy(nft1);
+    const energy = await heroManager.heroEnergy(nft1);
 
-  //   expect(energy.toNumber()).to.equal(0);
-  //   expect(
-  //     lobbyBattle.createLobby(
-  //       formatBytes32String("lb6"),
-  //       formatBytes32String("avatar6"),
-  //       1,
-  //       [nft1]
-  //     )
-  //   ).to.be.revertedWith("LobbyBattle: not enough energy");
+    expect(energy.toNumber()).to.equal(0);
+    expect(
+      lobbyManager.createLobby(
+        formatBytes32String("lb6"),
+        formatBytes32String("avatar6"),
+        1,
+        [nft1]
+      )
+    ).to.be.revertedWith("lobbyManager: not enough energy");
 
-  //   ethers.provider.send("evm_increaseTime", [1 * 24 * 60 * 60]);
-  //   await lobbyBattle.createLobby(
-  //     formatBytes32String("lb6"),
-  //     formatBytes32String("avatar6"),
-  //     1,
-  //     [nft1]
-  //   );
+    ethers.provider.send("evm_increaseTime", [1 * 24 * 60 * 60]);
+    await lobbyManager.createLobby(
+      formatBytes32String("lb6"),
+      formatBytes32String("avatar6"),
+      1,
+      [nft1]
+    );
 
-  //   const energyAfterday = await heroManager.heroEnergy(nft1);
-  //   expect(energyAfterday.toNumber()).to.equal(4);
-  // });
+    const energyAfterday = await heroManager.heroEnergy(nft1);
+    expect(energyAfterday.toNumber()).to.equal(4);
+  });
 
   it("join lobby costs fee", async function () {
     const [admin, user] = await ethers.getSigners();
@@ -207,21 +216,21 @@ describe("Lobby Battle", function () {
     console.log((await token.balanceOf(user.address)).toString());
 
     console.log(nft2);
-    await token.approve(lobbyBattle.address, constants.MaxUint256);
+    await token.approve(lobbyManager.address, constants.MaxUint256);
     await token
       .connect(user)
-      .approve(lobbyBattle.address, constants.MaxUint256);
+      .approve(lobbyManager.address, constants.MaxUint256);
 
-    await lobbyBattle.createLobby(
+    await lobbyManager.createLobby(
       formatBytes32String("lb1"),
       formatBytes32String("avatar1"),
       1,
       [nft1]
     );
 
-    await lobbyBattle.connect(user).joinLobby(1, [nft2]);
+    await lobbyManager.connect(user).joinLobby(1, [nft2]);
 
-    const lobby = await lobbyBattle.lobbies(1);
+    const lobby = await lobbyManager.lobbies(1);
     console.log(lobby);
 
     console.log(await heroManager.heroes(nft1));

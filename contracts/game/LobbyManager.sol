@@ -5,10 +5,11 @@ import "hardhat/console.sol";
 import "./HeroManager.sol";
 import "./Randomness.sol";
 import "../interfaces/IHeroManager.sol";
+import "../interfaces/IVersusBattle.sol";
 import "../libraries/UnsafeMath.sol";
 
-/** Logic for lobby battle */
-contract LobbyBattle is Ownable, Multicall, Randomness {
+/** lobby management */
+contract LobbyManager is Ownable, Multicall, Randomness {
   using UnsafeMath for uint256;
 
   struct Lobby {
@@ -23,11 +24,6 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 winner; // 1: host, 2 : client, 0: in-progress
     uint256 fee;
     uint256 rewards;
-  }
-
-  struct LobbyRefreshInfo {
-    uint256 updatedAt;
-    uint256 limit;
   }
 
   uint256 private lobbyIterator;
@@ -48,6 +44,8 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     public lobbyHeroes;
   mapping(uint256 => Lobby) public lobbies;
   mapping(uint256 => uint256) public lobbyFees;
+
+  mapping(uint256 => IVersusBattle) public battles;
 
   event BattleFinished(
     uint256 indexed lobbyId,
@@ -73,20 +71,15 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     heroManager.validateHeroEnergies(heroIds);
     IERC20 token = IERC20(heroManager.token());
 
-    require(capacity == heroIds.length, "LobbyBattle: wrong parameters");
-    require(fee > 0, "LobbyBattle: wrong lobby capacity");
+    require(capacity == heroIds.length, "LobbyManager: wrong parameters");
+    require(fee > 0, "LobbyManager: wrong lobby capacity");
     require(
       token.transferFrom(host, rewardsPayeer, fee),
-      "LobbyBattle: not enough fee"
+      "LobbyManager: not enough fee"
     );
 
-    if (!registeredPlayers[host]) {
-      uint256 tp = totalPlayers;
-      uniquePlayers[tp] = host;
-      registeredPlayers[host] = true;
-      tp = tp.add(1);
-      totalPlayers = tp;
-    }
+    registerUniquePlayers(host);
+
     playersFees[host] = playersFees[host].add(fee);
 
     uint256 lobbyId = lobbyIterator.add(1);
@@ -117,30 +110,27 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
   function joinLobby(uint256 lobbyId, uint256[] calldata heroIds) external {
     address client = msg.sender;
     address host = lobbies[lobbyId].host;
-    address rewardsPool = rewardsPayeer;
     uint256 capacity = lobbies[lobbyId].capacity;
 
     heroManager.validateHeroIds(heroIds, client);
     heroManager.validateHeroEnergies(heroIds);
 
-    require(lobbies[lobbyId].id == lobbyId, "LobbyBattle: lobby doesn't exist");
-    require(capacity == heroIds.length, "LobbyBattle: wrong heroes");
-    require(lobbies[lobbyId].finishedAt == 0, "LobbyBattle: already finished");
+    require(
+      lobbies[lobbyId].id == lobbyId,
+      "LobbyManager: lobby doesn't exist"
+    );
+    require(capacity == heroIds.length, "LobbyManager: wrong heroes");
+    require(lobbies[lobbyId].finishedAt == 0, "LobbyManager: already finished");
 
     IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      token.transferFrom(client, rewardsPool, fee),
-      "LobbyBattle: not enough fee"
+      token.transferFrom(client, rewardsPayeer, fee),
+      "LobbyManager: not enough fee"
     );
 
-    if (!registeredPlayers[client]) {
-      uint256 tp = totalPlayers;
-      uniquePlayers[tp] = client;
-      registeredPlayers[client] = true;
-      tp = tp.add(1);
-      totalPlayers = tp;
-    }
+    registerUniquePlayers(client);
+
     playersFees[client] = playersFees[client].add(fee);
 
     lobbies[lobbyId].client = client;
@@ -151,161 +141,39 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
     uint256 reward = fee.mul(benefitMultiplier).div(100);
     lobbies[lobbyId].rewards = reward;
 
-    if (capacity == 1) {
-      uint256 winner = contest1vs1(hostHeroes, heroIds);
-      lobbies[lobbyId].winner = winner;
-      if (winner == 1) {
-        heroManager.expUp(hostHeroes[0], true);
-        heroManager.expUp(heroIds[0], false);
+    IVersusBattle battle = battles[capacity];
+    uint256 winner = battle.contest(hostHeroes, heroIds);
+    lobbies[lobbyId].winner = winner;
 
-        playersRewards[host] = playersRewards[host].add(reward);
-      } else {
-        heroManager.expUp(hostHeroes[0], false);
-        heroManager.expUp(heroIds[0], true);
+    battleResultProcess(lobbyId, winner, hostHeroes, heroIds, client);
 
-        playersRewards[client] = playersRewards[client].add(reward);
-      }
+    address winnerAddress = winner == 1 ? host : client;
+    token.transferFrom(rewardsPayeer, winnerAddress, reward);
+    playersRewards[winnerAddress] = playersRewards[winnerAddress].add(reward);
 
-      lobbyHeroes[lobbyId][client][0] = heroIds[0];
-      heroManager.spendHeroEnergy(heroIds[0]);
+    emit BattleFinished(lobbyId, host, client);
+  }
 
-      token.transferFrom(rewardsPool, winner == 1 ? host : client, reward);
-
-      emit BattleFinished(lobbyId, host, client);
+  function registerUniquePlayers(address player) internal {
+    if (!registeredPlayers[player]) {
+      uniquePlayers[totalPlayers] = player;
+      registeredPlayers[player] = true;
+      totalPlayers = totalPlayers.add(1);
     }
   }
 
-  function contest1vs1(
+  function battleResultProcess(
+    uint256 lobbyId,
+    uint256 winner,
     uint256[] memory hostHeroes,
-    uint256[] memory clientHeroes
-  ) internal view returns (uint256) {
-    uint256 hostHero = hostHeroes[0];
-    uint256 clientHero = clientHeroes[0];
-
-    uint256 hostHeroPower = heroManager.heroPower(hostHero);
-    uint256 clientHeroPower = heroManager.heroPower(clientHero);
-
-    uint256 hostHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(
-      hostHero
-    );
-    uint256 hostHeroLevel = heroManager.heroLevel(hostHero);
-
-    uint256 clientHeroPrimaryAttribute = heroManager.heroPrimaryAttribute(
-      clientHero
-    );
-    uint256 clientHeroLevel = heroManager.heroLevel(clientHero);
-
-    // strength vs strength, agility vs agility or intelligence vs intelligence
-    if (hostHeroPrimaryAttribute == clientHeroPrimaryAttribute) {
-      if (hostHeroLevel > clientHeroLevel) {
-        if (hostHeroPower > clientHeroPower) {
-          return 1; // host win
-        } else if (hostHeroPower == clientHeroPower) {
-          uint256 dice = random(1, 100);
-          if (dice <= 60) {
-            return 1; // host win
-          }
-          return 2; // client win
-        } else {
-          uint256 dice = random(1, 100);
-          if (dice <= 70) {
-            return 2; // client win
-          }
-          return 1; // host win
-        }
-      } else if (hostHeroLevel == clientHeroLevel) {
-        if (hostHeroPower > clientHeroPower) {
-          uint256 dice = random(1, 100);
-          if (dice <= 70) {
-            return 1; // host win
-          }
-          return 2; // client win
-        } else if (hostHeroPower == clientHeroPower) {
-          return uint256(random(1, 2));
-        } else {
-          uint256 dice = random(1, 100);
-          if (dice <= 70) {
-            return 2; // client win
-          }
-          return 1; // host win
-        }
-      } else {
-        if (hostHeroPower < clientHeroPower) {
-          return 2; // client win
-        } else if (hostHeroPower == clientHeroPower) {
-          uint256 dice = random(1, 100);
-          if (dice <= 60) {
-            return 2; // client win
-          }
-          return 1; // host win
-        } else {
-          uint256 dice = random(1, 100);
-          if (dice <= 70) {
-            return 1; // host win
-          }
-          return 2; // client win
-        }
-      }
-    } else {
-      // same level
-      if (hostHeroLevel == clientHeroLevel) {
-        if (hostHeroPower > clientHeroPower) {
-          // same level but strength's power is greater than agility: 70% chance for strength, 30% for agility
-
-          uint256 dice = random(1, 100);
-          if (dice > 70) {
-            return 1; // host: strength win
-          }
-          return 2; // client: agility win
-        } else if (hostHeroPower == clientHeroPower) {
-          // same level and same power
-
-          return uint256(random(1, 2)); // 50%:50%
-        } else {
-          // same level but agility's power is greater than strength: 80% chance for agility, 20% for strength
-          uint256 dice = random(1, 100);
-          if (dice <= 20) {
-            return 1; // host: strength win
-          }
-          return 2; // client: agility win
-        }
-      } else if (hostHeroLevel > clientHeroLevel) {
-        // strength level is higher
-
-        if (hostHeroPower > clientHeroPower) {
-          // strength's level and power is greater than agility
-          return 1; // strength win always
-        } else {
-          // strength level is greater than agility but power is less than or equal: 40% for strength, 60% for agility
-          uint256 dice = random(1, 100);
-          if (dice <= 40) {
-            return 1; // host: strength win
-          }
-          return 2; // client: agility win
-        }
-      } else {
-        // agility level is higher
-
-        if (hostHeroPower < clientHeroPower) {
-          return 2; // agility win
-        } else if (hostHeroPower == clientHeroPower) {
-          // same power. 70% for agility and 30% for strength
-
-          uint256 dice = random(1, 100);
-          if (dice <= 30) {
-            return 1; // host: strength win
-          }
-          return 2; // client: agility win
-        } else {
-          // agility level is higher but power is less
-
-          uint256 dice = random(1, 100);
-          if (dice <= 60) {
-            return 1; // host: strength win
-          }
-          return 2; // client: agility win
-        }
-      }
+    uint256[] memory clientHeroes,
+    address client
+  ) internal {
+    for (uint256 i = 0; i < hostHeroes.length; i = i.add(1)) {
+      heroManager.expUp(hostHeroes[i], winner == 1);
+      heroManager.expUp(clientHeroes[i], winner == 2);
+      heroManager.spendHeroEnergy(clientHeroes[i]);
+      lobbyHeroes[lobbyId][client][i] = clientHeroes[i];
     }
   }
 
@@ -528,5 +396,12 @@ contract LobbyBattle is Ownable, Multicall, Randomness {
 
   function setBenefitMultiplier(uint256 multiplier) external onlyOwner {
     benefitMultiplier = multiplier;
+  }
+
+  function setBattleAddress(uint256 capacity, address battleAddress)
+    external
+    onlyOwner
+  {
+    battles[capacity] = IVersusBattle(battleAddress);
   }
 }
