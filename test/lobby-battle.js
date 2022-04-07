@@ -84,10 +84,10 @@ describe("Lobby Manager", function () {
     await battle1vs1.deployed();
 
     await heroManager.setLobbyManager(lobbyManager.address);
+    await heroManager.setRewardsPayeer(admin.address);
     await lobbyManager.setHeroManager(heroManager.address);
     await lobbyManager.setHeroManager(heroManager.address);
     await lobbyManager.setBattleAddress(1, battle1vs1.address);
-    await lobbyManager.setRewardsPayeer(admin.address);
 
     const nftIds = Array(NFT_NUMBER)
       .fill(0)
@@ -126,22 +126,30 @@ describe("Lobby Manager", function () {
   });
 
   it("create lobby costs fee", async function () {
-    const [admin] = await ethers.getSigners();
-    const beforeBalance = await token.balanceOf(admin.address);
+    const [, user] = await ethers.getSigners();
 
-    const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
+    await token.transfer(user.address, parseEther("100000000"));
+    const beforeBalance = await token.balanceOf(user.address);
 
-    await token.approve(lobbyManager.address, constants.MaxUint256);
+    const nftId = await nft.tokenOfOwnerByIndex(user.address, 0);
 
-    await lobbyManager.createLobby(
-      formatBytes32String("lb1"),
-      formatBytes32String("avatar1"),
-      1,
-      [nft1]
-    );
+    console.log(nftId);
+
+    await token
+      .connect(user)
+      .approve(lobbyManager.address, constants.MaxUint256);
+
+    await lobbyManager
+      .connect(user)
+      .createLobby(
+        formatBytes32String("lb1"),
+        formatBytes32String("avatar1"),
+        1,
+        [nftId]
+      );
 
     const fee = await lobbyManager.lobbyFees(1);
-    const afterBalance = await token.balanceOf(admin.address);
+    const afterBalance = await token.balanceOf(user.address);
 
     expect(beforeBalance.sub(fee)).to.equal(afterBalance);
   });
@@ -191,7 +199,7 @@ describe("Lobby Manager", function () {
         1,
         [nft1]
       )
-    ).to.be.revertedWith("lobbyManager: not enough energy");
+    ).to.be.revertedWith("HeroManager: not enough energy");
 
     ethers.provider.send("evm_increaseTime", [1 * 24 * 60 * 60]);
     await lobbyManager.createLobby(
@@ -205,35 +213,35 @@ describe("Lobby Manager", function () {
     expect(energyAfterday.toNumber()).to.equal(4);
   });
 
-  it("join lobby costs fee", async function () {
-    const [admin, user] = await ethers.getSigners();
+  // it("join lobby costs fee", async function () {
+  //   const [admin, user] = await ethers.getSigners();
 
-    await token.transfer(user.address, parseEther("100000000"));
+  //   await token.transfer(user.address, parseEther("100000000"));
 
-    const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
-    const nft2 = await nft.tokenOfOwnerByIndex(user.address, 0);
+  //   const nft1 = await nft.tokenOfOwnerByIndex(admin.address, 0);
+  //   const nft2 = await nft.tokenOfOwnerByIndex(user.address, 0);
 
-    console.log((await token.balanceOf(user.address)).toString());
+  //   console.log((await token.balanceOf(user.address)).toString());
 
-    console.log(nft2);
-    await token.approve(lobbyManager.address, constants.MaxUint256);
-    await token
-      .connect(user)
-      .approve(lobbyManager.address, constants.MaxUint256);
+  //   console.log(nft2);
+  //   await token.approve(lobbyManager.address, constants.MaxUint256);
+  //   await token
+  //     .connect(user)
+  //     .approve(lobbyManager.address, constants.MaxUint256);
 
-    await lobbyManager.createLobby(
-      formatBytes32String("lb1"),
-      formatBytes32String("avatar1"),
-      1,
-      [nft1]
-    );
+  //   await lobbyManager.createLobby(
+  //     formatBytes32String("lb1"),
+  //     formatBytes32String("avatar1"),
+  //     1,
+  //     [nft1]
+  //   );
 
-    await lobbyManager.connect(user).joinLobby(1, [nft2]);
+  //   await lobbyManager.connect(user).joinLobby(1, [nft2]);
 
-    const lobby = await lobbyManager.lobbies(1);
-    console.log(lobby);
+  //   const lobby = await lobbyManager.lobbies(1);
+  //   console.log(lobby);
 
-    console.log(await heroManager.heroes(nft1));
-    console.log(await heroManager.heroes(nft2));
-  });
+  //   console.log(await heroManager.heroes(nft1));
+  //   console.log(await heroManager.heroes(nft2));
+  // });
 });

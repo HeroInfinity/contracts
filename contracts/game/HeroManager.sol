@@ -16,6 +16,7 @@ contract HeroManager is Ownable, Multicall {
   IERC721 public nft;
 
   address public lobbyManagerAddress;
+  address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
 
   uint256 public constant HERO_MAX_LEVEL = 30;
   uint256 public constant HERO_MAX_EXP = 100 * 10**18;
@@ -62,26 +63,21 @@ contract HeroManager is Ownable, Multicall {
       "HeroManager: too many levels up"
     );
 
-    uint256 bonusLvUpFee = bonusLevelUpFee;
-
-    uint256 nextLevelUpFee = baseLevelUpFee.add(
-      bonusLvUpFee.mul(currentLevel.sub(1))
-    );
-
-    uint256 levelsFee = nextLevelUpFee.mul(levels);
-    uint256 totalLevelUpFee = levelsFee.add(
-      bonusLvUpFee.mul((levels.mul(levels.sub(1))).div(2))
-    );
-
+    uint256 totalLevelUpFee = levelUpFee(heroId, levels);
     require(
-      token.transferFrom(msg.sender, address(this), totalLevelUpFee),
+      token.transferFrom(msg.sender, rewardsPayeer, totalLevelUpFee),
       "HeroManager: not enough fee"
     );
 
+    GameFi.Hero memory hero = heroes[heroId];
+
     heroes[heroId].level = currentLevel.add(levels);
-    heroes[heroId].strength = levels.mul(heroes[heroId].strengthGain);
-    heroes[heroId].agility = levels.mul(heroes[heroId].agilityGain);
-    heroes[heroId].intelligence = levels.mul(heroes[heroId].intelligenceGain);
+    heroes[heroId].strength = hero.strength.add(levels.mul(hero.strengthGain));
+    heroes[heroId].agility = hero.agility.add(levels.mul(hero.agilityGain));
+    heroes[heroId].intelligence = hero.intelligence.add(
+      levels.mul(hero.intelligenceGain)
+    );
+    heroes[heroId].experience = 0;
   }
 
   function spendHeroEnergy(uint256 heroId) external {
@@ -138,6 +134,26 @@ contract HeroManager is Ownable, Multicall {
     for (uint256 i = 0; i < heroIds.length; i = i.add(1)) {
       expUp(heroIds[i], won);
     }
+  }
+
+  function levelUpFee(uint256 heroId, uint256 levels)
+    public
+    view
+    returns (uint256)
+  {
+    uint256 currentLevel = heroes[heroId].level;
+    uint256 bonusLvUpFee = bonusLevelUpFee;
+
+    uint256 nextLevelUpFee = baseLevelUpFee.add(
+      bonusLvUpFee.mul(currentLevel.sub(1))
+    );
+
+    uint256 levelsFee = nextLevelUpFee.mul(levels);
+    uint256 totalLevelUpFee = levelsFee.add(
+      bonusLvUpFee.mul((levels.mul(levels.sub(1))).div(2))
+    );
+
+    return totalLevelUpFee;
   }
 
   function heroEnergy(uint256 heroId) public view returns (uint256) {
@@ -216,8 +232,11 @@ contract HeroManager is Ownable, Multicall {
 
   function heroBonusExp(uint256 heroId) internal view returns (uint256) {
     uint256 level = heroLevel(heroId);
-    level = level.sub(1).mul(10**18);
-    return bonusExp.sub(level);
+    return levelExp(level);
+  }
+
+  function levelExp(uint256 level) public view returns (uint256) {
+    return bonusExp.sub(level.sub(1).mul(10**18));
   }
 
   function validateHeroIds(uint256[] calldata heroIds, address owner)
@@ -284,5 +303,9 @@ contract HeroManager is Ownable, Multicall {
 
   function setEnergyRecoveryTime(uint256 value) external onlyOwner {
     energyRecoveryTime = value;
+  }
+
+  function setRewardsPayeer(address payer) external onlyOwner {
+    rewardsPayeer = payer;
   }
 }

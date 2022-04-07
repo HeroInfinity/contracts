@@ -29,9 +29,6 @@ contract LobbyManager is Ownable, Multicall, Randomness {
   uint256 private lobbyIterator;
 
   IHeroManager public heroManager;
-
-  address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
-
   uint256 private benefitMultiplier = 250;
 
   uint256 public totalPlayers;
@@ -74,7 +71,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     require(capacity == heroIds.length, "LobbyManager: wrong parameters");
     require(fee > 0, "LobbyManager: wrong lobby capacity");
     require(
-      token.transferFrom(host, rewardsPayeer, fee),
+      token.transferFrom(host, heroManager.rewardsPayeer(), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -125,7 +122,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      token.transferFrom(client, rewardsPayeer, fee),
+      token.transferFrom(client, heroManager.rewardsPayeer(), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -148,7 +145,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     battleResultProcess(lobbyId, winner, hostHeroes, heroIds, client);
 
     address winnerAddress = winner == 1 ? host : client;
-    token.transferFrom(rewardsPayeer, winnerAddress, reward);
+    token.transferFrom(heroManager.rewardsPayeer(), winnerAddress, reward);
     playersRewards[winnerAddress] = playersRewards[winnerAddress].add(reward);
 
     emit BattleFinished(lobbyId, host, client);
@@ -380,10 +377,6 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     }
 
     return result;
-  }
-
-  function setRewardsPayeer(address payer) external onlyOwner {
-    rewardsPayeer = payer;
   }
 
   function setHeroManager(address hmAddr) external onlyOwner {
