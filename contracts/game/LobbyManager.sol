@@ -43,6 +43,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
   mapping(uint256 => uint256) public lobbyFees;
 
   mapping(uint256 => IVersusBattle) public battles;
+  mapping(uint256 => mapping(address => uint256)) public powerHistory;
 
   event BattleFinished(
     uint256 indexed lobbyId,
@@ -77,6 +78,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
 
     registerUniquePlayers(host);
 
+    // Sum up total fees
     playersFees[host] = playersFees[host].add(fee);
 
     uint256 lobbyId = lobbyIterator.add(1);
@@ -126,8 +128,10 @@ contract LobbyManager is Ownable, Multicall, Randomness {
       "LobbyManager: not enough fee"
     );
 
+    // Register player address on unique players table
     registerUniquePlayers(client);
 
+    // Sum up total fees
     playersFees[client] = playersFees[client].add(fee);
 
     lobbies[lobbyId].client = client;
@@ -135,6 +139,11 @@ contract LobbyManager is Ownable, Multicall, Randomness {
 
     uint256[] memory hostHeroes = getPlayerHeroesOnLobby(lobbyId, host);
 
+    // Save heroes' power
+    powerHistory[lobbyId][host] = getHeroesPower(hostHeroes);
+    powerHistory[lobbyId][client] = getHeroesPower(heroIds);
+
+    // Reward calculation
     uint256 reward = fee.mul(benefitMultiplier).div(100);
     lobbies[lobbyId].rewards = reward;
 
@@ -244,7 +253,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
   }
 
   function getHeroesPower(uint256[] memory heroes)
-    external
+    public
     view
     returns (uint256)
   {
@@ -253,6 +262,14 @@ contract LobbyManager is Ownable, Multicall, Randomness {
       power = power.add(heroManager.heroPower(heroes[i]));
     }
     return power;
+  }
+
+  function getPowerHistory(uint256 lobbyId, address player)
+    external
+    view
+    returns (uint256)
+  {
+    return powerHistory[lobbyId][player];
   }
 
   function getActiveLobbies(address myAddr, uint256 capacity)

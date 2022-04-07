@@ -108,21 +108,21 @@ contract HeroManager is Ownable, Multicall {
       caller == lobbyManagerAddress || caller == address(this),
       "HeroManager: callable by lobby battle only"
     );
-    uint256 exp = won
-      ? heroBonusExp(heroId)
-      : heroBonusExp(heroId).div(expDiff);
-
     uint256 hrLevel = heroes[heroId].level;
-    uint256 heroExp = heroes[heroId].experience;
+
     if (hrLevel < HERO_MAX_LEVEL) {
+      uint256 exp = won
+        ? heroBonusExp(heroId)
+        : heroBonusExp(heroId).div(expDiff);
+      uint256 heroExp = heroes[heroId].experience;
       heroExp = heroExp.add(exp);
       if (heroExp >= HERO_MAX_EXP) {
         heroExp = heroExp.sub(HERO_MAX_EXP);
         hrLevel = hrLevel.add(1);
       }
+      heroes[heroId].level = hrLevel;
+      heroes[heroId].experience = heroExp;
     }
-    heroes[heroId].level = hrLevel;
-    heroes[heroId].experience = heroExp;
   }
 
   function bulkExpUp(uint256[] calldata heroIds, bool won) external {
