@@ -28,8 +28,9 @@ contract LobbyManager is Ownable, Multicall {
 
   uint256 public totalLobbies;
 
+  address public nodePoolAddress;
   IHeroManager public heroManager;
-  uint256 public benefitMultiplier = 250;
+  uint256 public benefitMultiplier = 180;
 
   uint256 public totalPlayers;
   mapping(uint256 => address) public uniquePlayers;
@@ -51,10 +52,11 @@ contract LobbyManager is Ownable, Multicall {
     address indexed client
   );
 
-  constructor() {
-    lobbyFees[1] = 5000 * 10**18;
-    lobbyFees[3] = 25000 * 10**18;
-    lobbyFees[5] = 50000 * 10**18;
+  constructor(address npAddr) {
+    lobbyFees[1] = 50000 * 10**18;
+    lobbyFees[3] = 125000 * 10**18;
+    lobbyFees[5] = 175000 * 10**18;
+    nodePoolAddress = npAddr;
   }
 
   function createLobby(
@@ -72,7 +74,19 @@ contract LobbyManager is Ownable, Multicall {
     require(capacity == heroIds.length, "LobbyManager: wrong parameters");
     require(fee > 0, "LobbyManager: wrong lobby capacity");
     require(
-      token.transferFrom(host, heroManager.rewardsPayeer(), fee),
+      token.transferFrom(
+        host,
+        heroManager.rewardsPayeer(),
+        (fee * benefitMultiplier) / 200
+      ),
+      "LobbyManager: not enough fee"
+    );
+    require(
+      token.transferFrom(
+        host,
+        nodePoolAddress,
+        (fee * (200 - benefitMultiplier)) / 200
+      ),
       "LobbyManager: not enough fee"
     );
 
@@ -124,7 +138,19 @@ contract LobbyManager is Ownable, Multicall {
     IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      token.transferFrom(client, heroManager.rewardsPayeer(), fee),
+      token.transferFrom(
+        client,
+        heroManager.rewardsPayeer(),
+        (fee * benefitMultiplier) / 200
+      ),
+      "LobbyManager: not enough fee"
+    );
+    require(
+      token.transferFrom(
+        client,
+        nodePoolAddress,
+        (fee * (200 - benefitMultiplier)) / 200
+      ),
       "LobbyManager: not enough fee"
     );
 
@@ -221,6 +247,7 @@ contract LobbyManager is Ownable, Multicall {
   }
 
   function setBenefitMultiplier(uint256 multiplier) external onlyOwner {
+    require(multiplier < 200, "LobbyManager: too high multiplier");
     benefitMultiplier = multiplier;
   }
 
@@ -229,5 +256,9 @@ contract LobbyManager is Ownable, Multicall {
     onlyOwner
   {
     battles[capacity] = IVersusBattle(battleAddress);
+  }
+
+  function setNodePool(address npAddr) external onlyOwner {
+    nodePoolAddress = npAddr;
   }
 }
