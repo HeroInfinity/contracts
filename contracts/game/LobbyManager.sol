@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.9;
 
-import "hardhat/console.sol";
-import "./HeroManager.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "./Randomness.sol";
 import "../interfaces/IHeroManager.sol";
 import "../interfaces/IVersusBattle.sol";
@@ -26,10 +27,10 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     uint256 rewards;
   }
 
-  uint256 private lobbyIterator;
+  uint256 public totalLobbies;
 
   IHeroManager public heroManager;
-  uint256 private benefitMultiplier = 250;
+  uint256 public benefitMultiplier = 250;
 
   uint256 public totalPlayers;
   mapping(uint256 => address) public uniquePlayers;
@@ -62,7 +63,7 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     bytes32 avatar,
     uint256 capacity,
     uint256[] calldata heroIds
-  ) public {
+  ) external {
     address host = msg.sender;
     uint256 fee = lobbyFees[capacity];
     heroManager.validateHeroIds(heroIds, host);
@@ -81,8 +82,8 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     // Sum up total fees
     playersFees[host] = playersFees[host].add(fee);
 
-    uint256 lobbyId = lobbyIterator.add(1);
-    lobbyIterator = lobbyId;
+    uint256 lobbyId = totalLobbies.add(1);
+    totalLobbies = lobbyId;
 
     Lobby memory lobby = Lobby(
       name,
@@ -200,58 +201,6 @@ contract LobbyManager is Ownable, Multicall, Randomness {
     return heroes;
   }
 
-  function getLobbyHeroes(uint256 lobbyId)
-    public
-    view
-    returns (
-      address,
-      uint256[] memory,
-      address,
-      uint256[] memory
-    )
-  {
-    address host = lobbies[lobbyId].host;
-    address client = lobbies[lobbyId].client;
-    return (
-      host,
-      getPlayerHeroesOnLobby(lobbyId, host),
-      client,
-      getPlayerHeroesOnLobby(lobbyId, client)
-    );
-  }
-
-  function getLobbyPower(uint256 lobbyId)
-    external
-    view
-    returns (
-      address,
-      uint256,
-      address,
-      uint256
-    )
-  {
-    (
-      address host,
-      uint256[] memory hostHeroes,
-      address client,
-      uint256[] memory clientHeroes
-    ) = getLobbyHeroes(lobbyId);
-
-    uint256 hostPower;
-    uint256 clientPower;
-    for (uint256 i = 0; i < hostHeroes.length; i = i.add(1)) {
-      uint256 hostHeroPower = heroManager.heroPower(hostHeroes[i]);
-      hostPower = hostPower.add(hostHeroPower);
-
-      if (client != address(0)) {
-        uint256 clientHeroPower = heroManager.heroPower(clientHeroes[i]);
-        clientPower = clientPower.add(clientHeroPower);
-      }
-    }
-
-    return (host, hostPower, client, clientPower);
-  }
-
   function getHeroesPower(uint256[] memory heroes)
     public
     view
@@ -262,138 +211,6 @@ contract LobbyManager is Ownable, Multicall, Randomness {
       power = power.add(heroManager.heroPower(heroes[i]));
     }
     return power;
-  }
-
-  function getPowerHistory(uint256 lobbyId, address player)
-    external
-    view
-    returns (uint256)
-  {
-    return powerHistory[lobbyId][player];
-  }
-
-  function getActiveLobbies(address myAddr, uint256 capacity)
-    external
-    view
-    returns (uint256[] memory)
-  {
-    uint256 count;
-
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt == 0 &&
-        lobbies[i].capacity == capacity &&
-        lobbies[i].host != myAddr
-      ) {
-        count++;
-      }
-    }
-
-    uint256 baseIndex = 0;
-    uint256[] memory result = new uint256[](count);
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt == 0 &&
-        lobbies[i].capacity == capacity &&
-        lobbies[i].host != myAddr
-      ) {
-        result[baseIndex] = i;
-        baseIndex++;
-      }
-    }
-
-    return result;
-  }
-
-  function getMyLobbies(address myAddr, uint256 capacity)
-    external
-    view
-    returns (uint256[] memory)
-  {
-    uint256 count;
-
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt == 0 &&
-        lobbies[i].capacity == capacity &&
-        lobbies[i].host == myAddr
-      ) {
-        count++;
-      }
-    }
-
-    uint256 baseIndex = 0;
-    uint256[] memory result = new uint256[](count);
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt == 0 &&
-        lobbies[i].capacity == capacity &&
-        lobbies[i].host == myAddr
-      ) {
-        result[baseIndex] = i;
-        baseIndex++;
-      }
-    }
-
-    return result;
-  }
-
-  function getMyHistory(address myAddr, uint256 capacity)
-    external
-    view
-    returns (uint256[] memory)
-  {
-    uint256 count;
-
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt > 0 &&
-        lobbies[i].capacity == capacity &&
-        (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
-      ) {
-        count++;
-      }
-    }
-
-    uint256 baseIndex = 0;
-    uint256[] memory result = new uint256[](count);
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (
-        lobbies[i].finishedAt > 0 &&
-        lobbies[i].capacity == capacity &&
-        (lobbies[i].host == myAddr || lobbies[i].client == myAddr)
-      ) {
-        result[baseIndex] = i;
-        baseIndex++;
-      }
-    }
-
-    return result;
-  }
-
-  function getAllHistory(uint256 capacity)
-    external
-    view
-    returns (uint256[] memory)
-  {
-    uint256 count;
-
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (lobbies[i].finishedAt > 0 && lobbies[i].capacity == capacity) {
-        count++;
-      }
-    }
-
-    uint256 baseIndex = 0;
-    uint256[] memory result = new uint256[](count);
-    for (uint256 i = 1; i <= lobbyIterator; i++) {
-      if (lobbies[i].finishedAt > 0 && lobbies[i].capacity == capacity) {
-        result[baseIndex] = i;
-        baseIndex++;
-      }
-    }
-
-    return result;
   }
 
   function setHeroManager(address hmAddr) external onlyOwner {

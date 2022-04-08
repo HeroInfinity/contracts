@@ -28,6 +28,13 @@ async function main() {
   );
   await battle1vs1.deployed();
 
+  const DataProcessor = await hre.ethers.getContractFactory("DataProcessor");
+  const dataProcessor = await DataProcessor.deploy(
+    heroManager.address,
+    lobbyManager.address
+  );
+  await dataProcessor.deployed();
+
   await heroManager.setLobbyManager(lobbyManager.address);
   await lobbyManager.setHeroManager(heroManager.address);
   await lobbyManager.setHeroManager(heroManager.address);
@@ -39,10 +46,12 @@ async function main() {
   await updateSDK([
     ["heroManager", heroManager.address],
     ["lobbyManager", lobbyManager.address],
+    ["dataProcessor", dataProcessor.address],
   ]);
 
   console.log("HeroManager deployed to: " + heroManager.address);
   console.log("LobbyManager deployed to: " + lobbyManager.address);
+  console.log("DataProcessor deployed to: " + dataProcessor.address);
 
   await sleep(100000);
 
@@ -62,12 +71,24 @@ async function main() {
   do {
     try {
       await hre.run("verify:verify", {
-        address: lobbyManager.address,
+        address: LobbyManager.address,
         contract: "contracts/game/LobbyManager.sol:LobbyManager",
       });
       lobbyManagerVerified = true;
     } catch (err) {}
   } while (!lobbyManagerVerified);
+
+  let dataProcessorVerified = false;
+  do {
+    try {
+      await hre.run("verify:verify", {
+        address: dataProcessor.address,
+        contract: "contracts/game/DataProcessor.sol:DataProcessor",
+        constructorArguments: [heroManager.address, lobbyManager.address],
+      });
+      dataProcessorVerified = true;
+    } catch (err) {}
+  } while (!dataProcessorVerified);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
