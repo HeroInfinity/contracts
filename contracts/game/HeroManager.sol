@@ -200,18 +200,8 @@ contract HeroManager is Ownable, Multicall {
       stat3 *
       thirdMultiplier;
 
-    if (hero.rarity == 1) {
-      // Rare
-      power = (power * rarityPowerBooster) / 100;
-    } else if (hero.rarity == 2) {
-      // Mythical
-      power = (power * (rarityPowerBooster**2)) / (100**2);
-    } else if (hero.rarity == 3) {
-      // Legendary
-      power = (power * (rarityPowerBooster**3)) / (100**3);
-    } else if (hero.rarity == 4) {
-      // Immortal
-      power = (power * (rarityPowerBooster**4)) / (100**4);
+    if (hero.rarity > 0) {
+      power = (power * (rarityPowerBooster**hero.rarity)) / (100**hero.rarity);
     }
 
     return power;
