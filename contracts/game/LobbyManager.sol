@@ -74,19 +74,7 @@ contract LobbyManager is Ownable, Multicall {
     require(capacity == heroIds.length, "LobbyManager: wrong parameters");
     require(fee > 0, "LobbyManager: wrong lobby capacity");
     require(
-      token.transferFrom(
-        host,
-        heroManager.rewardsPayeer(),
-        (fee * benefitMultiplier) / 200
-      ),
-      "LobbyManager: not enough fee"
-    );
-    require(
-      token.transferFrom(
-        host,
-        nodePoolAddress,
-        (fee * (200 - benefitMultiplier)) / 200
-      ),
+      token.transferFrom(host, heroManager.rewardsPayeer(), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -138,19 +126,7 @@ contract LobbyManager is Ownable, Multicall {
     IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      token.transferFrom(
-        client,
-        heroManager.rewardsPayeer(),
-        (fee * benefitMultiplier) / 200
-      ),
-      "LobbyManager: not enough fee"
-    );
-    require(
-      token.transferFrom(
-        client,
-        nodePoolAddress,
-        (fee * (200 - benefitMultiplier)) / 200
-      ),
+      token.transferFrom(client, heroManager.rewardsPayeer(), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -180,7 +156,15 @@ contract LobbyManager is Ownable, Multicall {
     battleResultProcess(lobbyId, winner, hostHeroes, heroIds, client);
 
     address winnerAddress = winner == 1 ? host : client;
+
+    // Send tokens
     token.transferFrom(heroManager.rewardsPayeer(), winnerAddress, reward);
+    token.transferFrom(
+      heroManager.rewardsPayeer(),
+      nodePoolAddress,
+      fee.mul(200 - benefitMultiplier).div(100)
+    );
+
     playersRewards[winnerAddress] = playersRewards[winnerAddress].add(reward);
 
     emit BattleFinished(lobbyId, host, client);
