@@ -11,6 +11,7 @@ const { updateSDK } = require("./utils/sdk");
 
 const TOKEN_ADDRESS = "0x28ee3E2826264b9c55FcdD122DFa93680916c9b8";
 const NFT_ADDRESS = "0x76b713ff56b9CAD82b2820202537A98182b5A0EC";
+const NODE_ADDRESS = "0xa0f90c8111465e75e5b7e0d85de0dcdc185da1ae";
 
 async function main() {
   const HeroManager = await hre.ethers.getContractFactory("HeroManager");
@@ -18,7 +19,7 @@ async function main() {
   await heroManager.deployed();
 
   const LobbyManager = await hre.ethers.getContractFactory("LobbyManager");
-  const lobbyManager = await LobbyManager.deploy();
+  const lobbyManager = await LobbyManager.deploy(NODE_ADDRESS);
   await lobbyManager.deployed();
 
   const DataProcessor = await hre.ethers.getContractFactory("DataProcessor");
@@ -78,6 +79,7 @@ async function main() {
       await hre.run("verify:verify", {
         address: LobbyManager.address,
         contract: "contracts/game/LobbyManager.sol:LobbyManager",
+        constructorArguments: [NODE_ADDRESS],
       });
       lobbyManagerVerified = true;
     } catch (err) {}
