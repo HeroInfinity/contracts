@@ -4,13 +4,12 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "./Randomness.sol";
 import "../interfaces/IHeroManager.sol";
 import "../interfaces/IVersusBattle.sol";
 import "../libraries/UnsafeMath.sol";
 
 /** lobby management */
-contract LobbyManager is Ownable, Multicall, Randomness {
+contract LobbyManager is Ownable, Multicall {
   using UnsafeMath for uint256;
 
   struct Lobby {

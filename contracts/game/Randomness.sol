@@ -13,13 +13,13 @@ contract Randomness {
     uint256 randomNum = uint256(
       keccak256(
         abi.encodePacked(
-          block.difficulty,
-          block.timestamp,
+          min,
+          max,
           msg.sender,
           msg.sig,
           gasleft(),
-          min,
-          max
+          block.difficulty,
+          block.timestamp
         )
       )
     );

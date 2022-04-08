@@ -21,19 +21,24 @@ async function main() {
   const lobbyManager = await LobbyManager.deploy();
   await lobbyManager.deployed();
 
-  const Battle1vs1 = await hre.ethers.getContractFactory("Battle1vs1");
-  const battle1vs1 = await Battle1vs1.deploy(
-    heroManager.address,
-    lobbyManager.address
-  );
-  await battle1vs1.deployed();
-
   const DataProcessor = await hre.ethers.getContractFactory("DataProcessor");
   const dataProcessor = await DataProcessor.deploy(
     heroManager.address,
     lobbyManager.address
   );
   await dataProcessor.deployed();
+
+  const Randomness = await hre.ethers.getContractFactory("Randomness");
+  const randomness = await Randomness.deploy();
+  await randomness.deployed();
+
+  const Battle1vs1 = await hre.ethers.getContractFactory("Battle1vs1");
+  const battle1vs1 = await Battle1vs1.deploy(
+    heroManager.address,
+    lobbyManager.address,
+    randomness.address
+  );
+  await battle1vs1.deployed();
 
   await heroManager.setLobbyManager(lobbyManager.address);
   await lobbyManager.setHeroManager(heroManager.address);

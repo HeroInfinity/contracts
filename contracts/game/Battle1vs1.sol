@@ -1,18 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.9;
 
-import "./Randomness.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IRandomness.sol";
 import "../interfaces/IHeroManager.sol";
 import "../interfaces/IVersusBattle.sol";
 
 /** Logic for 1 vs 1 lobby battle */
-contract Battle1vs1 is Randomness, IVersusBattle {
+contract Battle1vs1 is IVersusBattle, Ownable {
+  IRandomness public randomness;
   address public heroManagerAddress;
   address public lobbyAddress;
 
-  constructor(address hmAddr, address lbAddr) {
+  constructor(
+    address hmAddr,
+    address lbAddr,
+    address randAddr
+  ) {
     heroManagerAddress = hmAddr;
     lobbyAddress = lbAddr;
+    randomness = IRandomness(randAddr);
   }
 
   function contest(uint256[] memory hostHeroes, uint256[] memory clientHeroes)
@@ -47,13 +54,13 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         if (hostHeroPower > clientHeroPower) {
           return 1; // host win
         } else if (hostHeroPower == clientHeroPower) {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 60) {
             return 1; // host win
           }
           return 2; // client win
         } else {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 70) {
             return 2; // client win
           }
@@ -61,15 +68,15 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         }
       } else if (hostHeroLevel == clientHeroLevel) {
         if (hostHeroPower > clientHeroPower) {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 70) {
             return 1; // host win
           }
           return 2; // client win
         } else if (hostHeroPower == clientHeroPower) {
-          return uint256(random(1, 2));
+          return uint256(randomness.random(1, 2));
         } else {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 70) {
             return 2; // client win
           }
@@ -79,13 +86,13 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         if (hostHeroPower < clientHeroPower) {
           return 2; // client win
         } else if (hostHeroPower == clientHeroPower) {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 60) {
             return 2; // client win
           }
           return 1; // host win
         } else {
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 70) {
             return 1; // host win
           }
@@ -98,7 +105,7 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         if (hostHeroPower > clientHeroPower) {
           // same level but strength's power is greater than agility: 70% chance for strength, 30% for agility
 
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice > 70) {
             return 1; // host: strength win
           }
@@ -106,10 +113,10 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         } else if (hostHeroPower == clientHeroPower) {
           // same level and same power
 
-          return uint256(random(1, 2)); // 50%:50%
+          return uint256(randomness.random(1, 2)); // 50%:50%
         } else {
           // same level but agility's power is greater than strength: 80% chance for agility, 20% for strength
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 20) {
             return 1; // host: strength win
           }
@@ -123,7 +130,7 @@ contract Battle1vs1 is Randomness, IVersusBattle {
           return 1; // strength win always
         } else {
           // strength level is greater than agility but power is less than or equal: 40% for strength, 60% for agility
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 40) {
             return 1; // host: strength win
           }
@@ -137,7 +144,7 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         } else if (hostHeroPower == clientHeroPower) {
           // same power. 70% for agility and 30% for strength
 
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 30) {
             return 1; // host: strength win
           }
@@ -145,7 +152,7 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         } else {
           // agility level is higher but power is less
 
-          uint256 dice = random(1, 100);
+          uint256 dice = randomness.random(1, 100);
           if (dice <= 60) {
             return 1; // host: strength win
           }
@@ -153,5 +160,9 @@ contract Battle1vs1 is Randomness, IVersusBattle {
         }
       }
     }
+  }
+
+  function setRandomness(address randAddr) external onlyOwner {
+    randomness = IRandomness(randAddr);
   }
 }
