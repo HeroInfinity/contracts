@@ -16,7 +16,6 @@ contract HeroManager is Ownable, Multicall {
   IERC721 public nft;
 
   address public lobbyManagerAddress;
-  address public rewardsPayeer = 0x0cCA7943409260455CeEF6BE46c69B3fc808e24F;
 
   uint256 public constant HERO_MAX_LEVEL = 30;
   uint256 public constant HERO_MAX_EXP = 100 * 10**18;
@@ -65,7 +64,7 @@ contract HeroManager is Ownable, Multicall {
 
     uint256 totalLevelUpFee = levelUpFee(heroId, levels);
     require(
-      token.transferFrom(msg.sender, rewardsPayeer, totalLevelUpFee),
+      token.transferFrom(msg.sender, address(this), totalLevelUpFee),
       "HeroManager: not enough fee"
     );
 
@@ -305,7 +304,7 @@ contract HeroManager is Ownable, Multicall {
     energyRecoveryTime = value;
   }
 
-  function setRewardsPayeer(address payer) external onlyOwner {
-    rewardsPayeer = payer;
+  function withdrawReserves(uint256 amount) external onlyOwner {
+    token.transfer(msg.sender, amount);
   }
 }

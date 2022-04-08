@@ -74,7 +74,7 @@ contract LobbyManager is Ownable, Multicall {
     require(capacity == heroIds.length, "LobbyManager: wrong parameters");
     require(fee > 0, "LobbyManager: wrong lobby capacity");
     require(
-      token.transferFrom(host, heroManager.rewardsPayeer(), fee),
+      token.transferFrom(host, address(this), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -126,7 +126,7 @@ contract LobbyManager is Ownable, Multicall {
     IERC20 token = IERC20(heroManager.token());
     uint256 fee = lobbyFees[capacity];
     require(
-      token.transferFrom(client, heroManager.rewardsPayeer(), fee),
+      token.transferFrom(client, address(this), fee),
       "LobbyManager: not enough fee"
     );
 
@@ -158,12 +158,8 @@ contract LobbyManager is Ownable, Multicall {
     address winnerAddress = winner == 1 ? host : client;
 
     // Send tokens
-    token.transferFrom(heroManager.rewardsPayeer(), winnerAddress, reward);
-    token.transferFrom(
-      heroManager.rewardsPayeer(),
-      nodePoolAddress,
-      fee.mul(200 - benefitMultiplier).div(100)
-    );
+    token.transfer(winnerAddress, reward);
+    token.transfer(nodePoolAddress, fee.mul(200 - benefitMultiplier).div(100));
 
     playersRewards[winnerAddress] = playersRewards[winnerAddress].add(reward);
 
@@ -244,5 +240,10 @@ contract LobbyManager is Ownable, Multicall {
 
   function setNodePool(address npAddr) external onlyOwner {
     nodePoolAddress = npAddr;
+  }
+
+  function withdrawReserves(uint256 amount) external onlyOwner {
+    IERC20 token = IERC20(heroManager.token());
+    token.transfer(msg.sender, amount);
   }
 }
