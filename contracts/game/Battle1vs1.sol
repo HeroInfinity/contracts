@@ -162,6 +162,14 @@ contract Battle1vs1 is IVersusBattle, Ownable {
     }
   }
 
+  function setHeroManager(address hmAddr) external onlyOwner {
+    heroManagerAddress = hmAddr;
+  }
+
+  function setLobbyManager(address lmAddr) external onlyOwner {
+    lobbyAddress = lmAddr;
+  }
+
   function setRandomness(address randAddr) external onlyOwner {
     randomness = IRandomness(randAddr);
   }

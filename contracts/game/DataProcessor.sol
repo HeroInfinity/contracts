@@ -71,14 +71,6 @@ contract DataProcessor is Multicall, Ownable {
     return lobbyManager.getHeroesPower(heroes);
   }
 
-  function setHeroManager(address hmAddr) external onlyOwner {
-    heroManager = IHeroManager(hmAddr);
-  }
-
-  function setLobbyManager(address lmAddr) external onlyOwner {
-    lobbyManager = ILobbyManager(lmAddr);
-  }
-
   function getActiveLobbies(address myAddr, uint256 lobbyCapacity)
     external
     view
@@ -271,5 +263,13 @@ contract DataProcessor is Multicall, Ownable {
     }
 
     return result;
+  }
+
+  function setHeroManager(address hmAddr) external onlyOwner {
+    heroManager = IHeroManager(hmAddr);
+  }
+
+  function setLobbyManager(address lmAddr) external onlyOwner {
+    lobbyManager = ILobbyManager(lmAddr);
   }
 }
