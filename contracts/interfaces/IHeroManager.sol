@@ -29,4 +29,6 @@ interface IHeroManager {
     external
     view
     returns (bool);
+
+  function rewardsPayeer() external view returns (address);
 }

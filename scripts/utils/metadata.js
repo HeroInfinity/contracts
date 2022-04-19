@@ -11,7 +11,7 @@ const { formatBytes32String } = require("ethers/lib/utils");
 
 const NFT_NUMBER = 100;
 const BASE_URI =
-  "https://heroinfinity.mypinata.cloud/ipfs/QmdpC8hrgY5gVCTaNnn3vCzfXaeMLu1THxoGvBJrRPv165";
+  "https://heroinfinity.mypinata.cloud/ipfs/QmShqcYMpJQLZnyNqxqGZqb9zaE2CXPntuMVx4v6idNHas";
 
 const fetchAPI = (url) => {
   return new Promise((resolve) => {

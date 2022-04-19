@@ -14,7 +14,7 @@ async function main() {
   await randomness.deployed();
 
   for (let i = 0; i < 10000; i++) {
-    const randomNumber = await randomness.random(0, 100);
+    const randomNumber = await randomness.random(1, 2);
     console.log(randomNumber);
     await sleep(1000);
   }
