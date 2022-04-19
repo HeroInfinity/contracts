@@ -39,9 +39,9 @@ contract HeroInfinityNodePoolV2 is Ownable {
 
   uint256 public totalNodesCreated = 0;
 
-  IERC20 public hriToken = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IERC20 public hriToken = IERC20(0x0C4BA8e27e337C5e8eaC912D836aA8ED09e80e78);
   IHeroInfinityNodePool public oldNodePool =
-    IHeroInfinityNodePool(0xA0F90c8111465e75e5b7e0d85De0DCDc185DA1aE);
+    IHeroInfinityNodePool(0xFAd5Ef0F347eb7bB89E798B5d026F60aFA3E2bF4);
 
   constructor() {}
 
