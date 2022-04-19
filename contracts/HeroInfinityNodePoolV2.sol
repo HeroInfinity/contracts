@@ -4,9 +4,12 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./libraries/MathUtil.sol";
+import "./interfaces/IHeroInfinityNodePool.sol";
 
 contract HeroInfinityNodePoolV2 is Ownable {
   using SafeMath for uint256;
+  using MathUtil for uint256;
 
   struct NodeEntity {
     string name;
@@ -16,22 +19,54 @@ contract HeroInfinityNodePoolV2 is Ownable {
     uint256 dueTime;
   }
 
+  mapping(address => mapping(uint256 => uint256)) public userFees;
+  mapping(address => bool) public migrated;
   mapping(address => uint256) public nodeOwners;
   mapping(address => NodeEntity[]) private _nodesOfUser;
 
   uint256 public nodePrice = 200000 * 10**18;
-  uint256 public rewardPerDay = 8000 * 10**18;
-  uint256 public maxNodes = 25;
+  uint256 public initialRewardRate = 0.04 * 10**4; // starting at 4%
+  uint256 public rewardReduceRatePerDay = 0.97 * 100;
+  uint256 public minRewardRatePerDay = 0.003 * 10**4; // min rate 0.3%
+  uint256 public maxNodesPerWallet = 50;
+  uint256 public maxNodes = 5000;
 
-  uint256 public feeAmount = 10000000000000000;
+  uint256 public initialNodeFee = 10000000000000000;
+  uint256 public minNodeFee = 1000000000000000;
+  uint256 public feeDeductionRate = 15; // 15% per month
   uint256 public feeDuration = 28 days;
   uint256 public overDuration = 2 days;
 
   uint256 public totalNodesCreated = 0;
 
-  IERC20 public hriToken = IERC20(0x0C4BA8e27e337C5e8eaC912D836aA8ED09e80e78);
+  IERC20 public hriToken = IERC20(0x28ee3E2826264b9c55FcdD122DFa93680916c9b8);
+  IHeroInfinityNodePool public oldNodePool =
+    IHeroInfinityNodePool(0xA0F90c8111465e75e5b7e0d85De0DCDc185DA1aE);
 
   constructor() {}
+
+  function upgradeNode() external {
+    IHeroInfinityNodePool.NodeEntity[] memory nodes = oldNodePool.getNodes(
+      msg.sender
+    );
+
+    for (uint256 i = 0; i < nodes.length; i++) {
+      address account = msg.sender;
+      _nodesOfUser[account].push(
+        NodeEntity({
+          name: nodes[i].name,
+          creationTime: nodes[i].creationTime,
+          lastClaimTime: nodes[i].lastClaimTime,
+          feeTime: nodes[i].feeTime,
+          dueTime: nodes[i].dueTime
+        })
+      );
+      nodeOwners[account]++;
+      totalNodesCreated++;
+    }
+
+    migrated[msg.sender] = true;
+  }
 
   function createNode(string memory nodeName, uint256 count) external {
     require(count > 0, "Count should be not 0");
@@ -41,12 +76,13 @@ contract HeroInfinityNodePoolV2 is Ownable {
       isNameAvailable(account, nodeName),
       "CREATE NODE: Name not available"
     );
-    require(ownerCount + count <= maxNodes, "Count Limited");
+    require(ownerCount + count <= maxNodesPerWallet, "Count Limited");
     require(
       ownerCount == 0 ||
         _nodesOfUser[account][ownerCount - 1].creationTime < block.timestamp,
-      "You are creating many nodes in short time. Please try again later."
+      "Too many requests"
     );
+    require(totalNodesCreated + count <= maxNodes, "Exceed max nodes limit");
 
     uint256 price = nodePrice * count;
 
@@ -119,6 +155,17 @@ contract HeroInfinityNodePoolV2 is Ownable {
     }
   }
 
+  function getRewardsForDay(uint256 passedDays) public view returns (uint256) {
+    uint256 rewards = (nodePrice * initialRewardRate) / (10**4);
+
+    for (uint256 i = 0; i < passedDays - 1; i++) {
+      rewards = (rewards * rewardReduceRatePerDay) / 100;
+    }
+
+    uint256 minRewards = (nodePrice * minRewardRatePerDay) / (10**4);
+    return rewards > minRewards ? rewards : minRewards;
+  }
+
   function getNodeReward(NodeEntity memory node)
     internal
     view
@@ -127,31 +174,89 @@ contract HeroInfinityNodePoolV2 is Ownable {
     if (block.timestamp > node.dueTime) {
       return 0;
     }
-    return (rewardPerDay * (block.timestamp - node.lastClaimTime)) / 86400;
+
+    uint256 passedSeconds = block.timestamp - node.creationTime;
+    uint256 passedDays = passedSeconds.divCeil(86400);
+    uint256 todayPassedSeconds = passedSeconds % 86400;
+    uint256 secondsDiffBetweenLCTAndNow = block.timestamp - node.lastClaimTime;
+    todayPassedSeconds = todayPassedSeconds > secondsDiffBetweenLCTAndNow
+      ? secondsDiffBetweenLCTAndNow
+      : todayPassedSeconds;
+
+    uint256 rewards = 0;
+    for (uint256 i = 1; i <= passedDays; i++) {
+      if (node.creationTime + 86400 * i > node.lastClaimTime) {
+        uint256 passedSecondsAfterClaim = node.creationTime +
+          86400 *
+          i -
+          node.lastClaimTime;
+
+        uint256 dayReward = getRewardsForDay(i);
+        if (i == passedDays) {
+          rewards += (dayReward * todayPassedSeconds) / 86400;
+        } else {
+          if (passedSecondsAfterClaim >= 1 days) {
+            rewards += dayReward;
+          } else {
+            rewards += (dayReward * passedSecondsAfterClaim) / 86400;
+          }
+        }
+      }
+    }
+    return rewards;
+  }
+
+  function getFeeAmount(address account, uint256 createTime)
+    public
+    view
+    returns (uint256)
+  {
+    uint256 lastFee = userFees[account][createTime];
+    if (lastFee == 0) {
+      return initialNodeFee;
+    }
+
+    uint256 estimatedFee = (lastFee * (100 - feeDeductionRate)) / 100;
+    return minNodeFee > estimatedFee ? minNodeFee : estimatedFee;
+  }
+
+  function getAllFee(address user) public view returns (uint256) {
+    NodeEntity[] storage nodes = _nodesOfUser[user];
+
+    uint256 allFee = 0;
+    for (uint256 i = 0; i < nodes.length; i++) {
+      if (nodes[i].dueTime >= block.timestamp) {
+        allFee += getFeeAmount(user, nodes[i].creationTime);
+      }
+    }
+
+    return allFee;
   }
 
   function payNodeFee(uint256 _creationTime) external payable {
-    require(msg.value >= feeAmount, "Need to pay fee amount");
-    NodeEntity[] storage nodes = _nodesOfUser[msg.sender];
+    address user = msg.sender;
+    NodeEntity[] storage nodes = _nodesOfUser[user];
     NodeEntity storage node = _getNodeWithCreatime(nodes, _creationTime);
+    uint256 nodeFee = getFeeAmount(user, _creationTime);
+    require(msg.value >= nodeFee, "Need to pay fee amount");
     require(node.dueTime >= block.timestamp, "Node is disabled");
     node.feeTime = block.timestamp + feeDuration;
     node.dueTime = node.feeTime + overDuration;
+    userFees[user][_creationTime] = nodeFee;
   }
 
   function payAllNodesFee() external payable {
-    NodeEntity[] storage nodes = _nodesOfUser[msg.sender];
-    uint256 nodesCount = 0;
+    address user = msg.sender;
+    NodeEntity[] storage nodes = _nodesOfUser[user];
+    uint256 allFee = getAllFee(user);
+
+    require(msg.value >= allFee, "Need to pay fee amount");
     for (uint256 i = 0; i < nodes.length; i++) {
       if (nodes[i].dueTime >= block.timestamp) {
-        nodesCount++;
-      }
-    }
-    require(msg.value >= feeAmount * nodesCount, "Need to pay fee amount");
-    for (uint256 i = 0; i < nodes.length; i++) {
-      if (nodes[i].dueTime >= block.timestamp) {
+        uint256 nodeFee = getFeeAmount(user, nodes[i].creationTime);
         nodes[i].feeTime = block.timestamp + feeDuration;
         nodes[i].dueTime = nodes[i].feeTime + overDuration;
+        userFees[user][nodes[i].creationTime] = nodeFee;
       }
     }
   }
@@ -237,16 +342,24 @@ contract HeroInfinityNodePoolV2 is Ownable {
     payable(msg.sender).transfer(amount);
   }
 
-  function changeNodePrice(uint256 newNodePrice) external onlyOwner {
+  function setNodePrice(uint256 newNodePrice) external onlyOwner {
     nodePrice = newNodePrice;
   }
 
-  function changeRewardPerNode(uint256 _rewardPerDay) external onlyOwner {
-    rewardPerDay = _rewardPerDay;
+  function setInitialRewardRate(uint256 rate) external onlyOwner {
+    initialRewardRate = rate;
   }
 
-  function setFeeAmount(uint256 _feeAmount) external onlyOwner {
-    feeAmount = _feeAmount;
+  function setRewardReduceRatePerDay(uint256 rate) external onlyOwner {
+    rewardReduceRatePerDay = rate;
+  }
+
+  function setMinRewardRatePerDay(uint256 rate) external onlyOwner {
+    minRewardRatePerDay = rate;
+  }
+
+  function setInitialNodeFee(uint256 _feeAmount) external onlyOwner {
+    initialNodeFee = _feeAmount;
   }
 
   function setFeeDuration(uint256 _feeDuration) external onlyOwner {
@@ -255,6 +368,18 @@ contract HeroInfinityNodePoolV2 is Ownable {
 
   function setOverDuration(uint256 _overDuration) external onlyOwner {
     overDuration = _overDuration;
+  }
+
+  function setMaxNodesPerWallet(uint256 _count) external onlyOwner {
+    maxNodesPerWallet = _count;
+  }
+
+  function setFeeDeductionRate(uint256 rate) external onlyOwner {
+    feeDeductionRate = rate;
+  }
+
+  function setMinNodeFee(uint256 fee) external onlyOwner {
+    minNodeFee = fee;
   }
 
   function setMaxNodes(uint256 _count) external onlyOwner {

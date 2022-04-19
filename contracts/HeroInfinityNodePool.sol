@@ -45,7 +45,7 @@ contract HeroInfinityNodePool is Ownable {
     require(
       ownerCount == 0 ||
         _nodesOfUser[account][ownerCount - 1].creationTime < block.timestamp,
-      "You are creating many nodes in short time. Please try again later."
+      "Too many requests"
     );
 
     uint256 price = nodePrice * count;

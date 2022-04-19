@@ -7,10 +7,10 @@ const hre = require("hardhat");
 const { sleep } = require("./utils/sleep");
 
 async function main() {
-  const HeroInfinityNodePool = await hre.ethers.getContractFactory(
-    "HeroInfinityNodePool"
+  const HeroInfinityNodePoolV2 = await hre.ethers.getContractFactory(
+    "HeroInfinityNodePoolV2"
   );
-  const nodePool = await HeroInfinityNodePool.deploy();
+  const nodePool = await HeroInfinityNodePoolV2.deploy();
   await nodePool.deployed();
 
   await sleep(60000);
@@ -18,7 +18,7 @@ async function main() {
   try {
     await hre.run("verify:verify", {
       address: nodePool.address,
-      contract: "contracts/HeroInfinityNodePool.sol:HeroInfinityNodePool",
+      contract: "contracts/HeroInfinityNodePoolV2.sol:HeroInfinityNodePoolV2",
     });
   } catch (err) {
     console.log(err);
