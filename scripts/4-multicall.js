@@ -4,16 +4,27 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const { addHeroesMetadata } = require("./utils/metadata");
-
-const HERO_MANAGER_ADDRESS = "0xc04fe537b99ADFDAc0647834E022b5a8B3dec9bF";
+const { sleep } = require("./utils/sleep");
 
 async function main() {
-  // We get the contract to deploy
-  const HeroManager = await hre.ethers.getContractFactory("HeroManager");
-  const heroManager = await HeroManager.attach(HERO_MANAGER_ADDRESS);
+  const HeroInfinityMulticall = await hre.ethers.getContractFactory(
+    "HeroInfinityMulticall"
+  );
+  const multicall = await HeroInfinityMulticall.deploy();
+  await multicall.deployed();
 
-  await addHeroesMetadata(heroManager);
+  console.log("HeroInfinityMulticall deployed to: " + multicall.address);
+
+  await sleep(60000);
+
+  try {
+    await hre.run("verify:verify", {
+      address: multicall.address,
+      contract: "contracts/HeroInfinityMulticall.sol:HeroInfinityMulticall",
+    });
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
